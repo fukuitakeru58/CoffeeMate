@@ -1,0 +1,1 @@
+ALTER TABLE `recipes` ADD `serving` text DEFAULT '' NOT NULL;

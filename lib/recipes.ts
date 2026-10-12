@@ -9,7 +9,7 @@ export type BrewConditions = {
 };
 
 export type RecipeInput = {
-  title: string; method: string; bean: string; beanId: string | null; dripper: string; dripperId: string | null; roast: string; grinder: string;
+  title: string; method: string; serving: "hot" | "iced" | ""; bean: string; beanId: string | null; dripper: string; dripperId: string | null; roast: string; grinder: string;
   grind: string; grindClicks: string; dose: number; water: number;
   temperature: number; targetTime: number; actualTime: number | null; actualBrew: BrewConditions | null;
   hypothesis: string; steps: { time: number; water: number; note: string }[];
@@ -37,6 +37,7 @@ export function parseRecipe(value: unknown): RecipeInput | null {
   const bean = trim(input.bean, 100);
   const steps = parseSteps(input.steps);
   const method = trim(input.method, 40) || "ハンドドリップ";
+  const serving = input.serving === "hot" || input.serving === "iced" ? input.serving : "";
   const grinder = trim(input.grinder, 80);
   const grind = trim(input.grind, 40) || "中挽き";
   const grindClicks = clicks(input.grindClicks);
@@ -57,7 +58,7 @@ export function parseRecipe(value: unknown): RecipeInput | null {
   } : null;
   return {
     title, bean, beanId: trim(input.beanId, 80) || null, dripper: trim(input.dripper, 100), dripperId: trim(input.dripperId, 80) || null,
-    method,
+    method, serving,
     roast: trim(input.roast, 30) || "中煎り",
     grinder, grind, grindClicks, dose, water, temperature,
     targetTime: number(input.targetTime, 0, 5999, 180),

@@ -57,6 +57,13 @@
       "when": 1791807912872,
       "tag": "0007_greedy_callisto",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "6",
+      "when": 1791808976149,
+      "tag": "0008_elite_randall",
+      "breakpoints": true
     }
   ]
 }

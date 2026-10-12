@@ -65,6 +65,7 @@ export const recipes = sqliteTable("recipes", {
   authorName: text("author_name").notNull(),
   title: text("title").notNull(),
   method: text("method").notNull(),
+  serving: text("serving").notNull().default(""),
   bean: text("bean").notNull(),
   beanId: text("bean_id").references(() => beans.id, { onDelete: "set null" }),
   dripper: text("dripper").notNull().default(""),

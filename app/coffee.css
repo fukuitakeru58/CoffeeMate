@@ -335,3 +335,21 @@ a.side-link { text-decoration: none; }
 .memo-actions { display: flex; justify-content: flex-end; align-items: center; gap: 14px; margin-top: 22px; }
 .memo-remove { margin-right: auto; padding: 8px 0; border: 0; background: none; color: #a16e61; font-size: 11px; }
 @media (max-width: 560px) { .memo-backdrop { align-items: end; padding: 0; }.memo-dialog { width: 100%; border-radius: 18px 18px 0 0; padding: 22px 19px max(23px,env(safe-area-inset-bottom)); } }
+
+.recipe-badges { position: relative; z-index: 2; display: flex; flex-wrap: wrap; align-content: flex-start; gap: 5px; width: 100%; }
+.recipe-badges > span { display: inline-block; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; border-radius: 5px; padding: 5px 7px; background: rgba(255,255,255,.91); color: #526047; font-size: 10px; font-weight: 700; line-height: 1.2; }
+.recipe-badges .recipe-method { background: #f7f3e9; color: #43573d; }
+.recipe-badges .serving-iced { background: #dceef5; color: #3c7084; }
+.recipe-badges .serving-hot { background: #f9e6d7; color: #84543d; }
+.recipe-badge-dripper { flex: 0 1 auto; }
+.recipe-art { height: 164px; }
+.serving-picker { margin-top: 18px; }
+.serving-picker > span { display: block; margin-bottom: 8px; color: #565a50; font-size: 11px; font-weight: 700; }
+.serving-picker > div { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 8px; }
+.serving-picker button { padding: 11px 12px; border: 1px solid #e1e4db; border-radius: 8px; background: #fff; color: #687266; font-size: 12px; font-weight: 700; }
+.serving-picker button.selected { border-color: #8caa83; background: #eef4e9; color: #4b693f; }
+.profile-recipe-badges { gap: 5px; }
+.profile-recipe-badges > span { background: #eaf0e5; color: #647858; }
+.profile-recipe-card.with-image .profile-recipe-badges { position: absolute; top: 10px; left: 10px; width: calc(100% - 20px); }
+.profile-recipe-card.with-image .profile-recipe-image { height: 135px; }
+@media (max-width: 780px) { .recipe-art { height: 170px; } }
