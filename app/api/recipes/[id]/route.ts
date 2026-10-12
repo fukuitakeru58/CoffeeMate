@@ -14,8 +14,8 @@ export async function GET(_: Request, context: Context) {
   const user = await getAuthUser();
   const db = getDb();
   const [recipe] = await db.select().from(recipes).where(eq(recipes.id, id)).limit(1);
-  if (!recipe || (recipe.visibility !== "public" && recipe.userId !== user?.userId)) return Response.json({ error: "レシピが見つかりません" }, { status: 404 });
-  const thread = await db.select().from(comments).where(eq(comments.recipeId, id)).orderBy(comments.createdAt);
+  if (!recipe || ((recipe.visibility !== "public" || recipe.moderationStatus !== "visible") && recipe.userId !== user?.userId)) return Response.json({ error: "レシピが見つかりません" }, { status: 404 });
+  const thread = await db.select().from(comments).where(and(eq(comments.recipeId, id), eq(comments.moderationStatus, "visible"))).orderBy(comments.createdAt);
   const authors = await db.select({ userId: profiles.userId, displayName: profiles.displayName }).from(profiles).where(inArray(profiles.userId, [...new Set([recipe.userId, ...thread.map((comment) => comment.userId)])]));
   const names = new Map(authors.map((author) => [author.userId, author.displayName]));
   const [likeCount] = await db.select({ count: sql<number>`count(*)` }).from(likes).where(eq(likes.recipeId, id));

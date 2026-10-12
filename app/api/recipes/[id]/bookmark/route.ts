@@ -18,8 +18,8 @@ export async function PUT(request: Request, context: Context) {
   const note = payload.note.trim();
   const { id } = await context.params;
   const db = getDb();
-  const [recipe] = await db.select({ visibility: recipes.visibility, userId: recipes.userId }).from(recipes).where(eq(recipes.id, id)).limit(1);
-  if (!recipe || (recipe.visibility !== "public" && recipe.userId !== user.userId)) return Response.json({ error: "レシピが見つかりません" }, { status: 404 });
+  const [recipe] = await db.select({ visibility: recipes.visibility, moderationStatus: recipes.moderationStatus, userId: recipes.userId }).from(recipes).where(eq(recipes.id, id)).limit(1);
+  if (!recipe || recipe.moderationStatus !== "visible" || (recipe.visibility !== "public" && recipe.userId !== user.userId)) return Response.json({ error: "レシピが見つかりません" }, { status: 404 });
   await db.insert(bookmarks).values({ recipeId: id, userId: user.userId, note }).onConflictDoUpdate({ target: [bookmarks.recipeId, bookmarks.userId], set: { note } });
   return Response.json({ saved: true, note });
 }

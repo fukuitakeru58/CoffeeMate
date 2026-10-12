@@ -9,7 +9,7 @@ const MAX_BYTES = 5 * 1024 * 1024;
 const PNG_SIGNATURE = [137, 80, 78, 71, 13, 10, 26, 10];
 
 async function findRecipe(id: string) {
-  const [recipe] = await getDb().select({ userId: recipes.userId, visibility: recipes.visibility, imageKey: recipes.imageKey }).from(recipes).where(eq(recipes.id, id)).limit(1);
+  const [recipe] = await getDb().select({ userId: recipes.userId, visibility: recipes.visibility, moderationStatus: recipes.moderationStatus, imageKey: recipes.imageKey }).from(recipes).where(eq(recipes.id, id)).limit(1);
   return recipe ?? null;
 }
 
@@ -17,11 +17,11 @@ export async function GET(_: Request, context: Context) {
   const { id } = await context.params;
   const user = await getAuthUser();
   const recipe = await findRecipe(id);
-  if (!recipe || !recipe.imageKey || (recipe.visibility !== "public" && recipe.userId !== user?.userId)) return new Response(null, { status: 404 });
+  if (!recipe || !recipe.imageKey || ((recipe.visibility !== "public" || recipe.moderationStatus !== "visible") && recipe.userId !== user?.userId)) return new Response(null, { status: 404 });
   if (!env.BUCKET) return new Response(null, { status: 503 });
   const object = await env.BUCKET.get(recipe.imageKey);
   if (!object) return new Response(null, { status: 404 });
-  return new Response(object.body, { headers: { "Content-Type": "image/png", "X-Content-Type-Options": "nosniff", "Cache-Control": recipe.visibility === "public" ? "public, max-age=3600" : "private, no-store" } });
+  return new Response(object.body, { headers: { "Content-Type": "image/png", "X-Content-Type-Options": "nosniff", "Cache-Control": recipe.visibility === "public" && recipe.moderationStatus === "visible" ? "public, max-age=3600" : "private, no-store" } });
 }
 
 export async function PUT(request: Request, context: Context) {

@@ -79,7 +79,7 @@ export async function listRecipes(scope: string, userId?: string, profileUserId?
   const db = getDb();
   const sortColumn = filters.sort === "likes" ? sql<number>`(select count(*) from ${likes} where ${likes.recipeId} = ${recipes.id})`
     : filters.sort === "saves" ? sql<number>`(select count(*) from ${bookmarks} where ${bookmarks.recipeId} = ${recipes.id})`
-    : filters.sort === "comments" ? sql<number>`(select count(*) from ${comments} where ${comments.recipeId} = ${recipes.id})`
+    : filters.sort === "comments" ? sql<number>`(select count(*) from ${comments} where ${comments.recipeId} = ${recipes.id} and ${comments.moderationStatus} = 'visible')`
     : recipes.createdAt;
   const orderBy = filters.direction === "asc" ? asc(sortColumn) : desc(sortColumn);
   const countryBeans = filters.country ? await db.select({ id: beans.id }).from(beans).where(eq(beans.country, filters.country)) : [];
@@ -95,15 +95,15 @@ export async function listRecipes(scope: string, userId?: string, profileUserId?
     rows = await db.select().from(recipes).where(withFilters(eq(recipes.userId, userId))).orderBy(orderBy, desc(recipes.createdAt), desc(recipes.id)).limit(100);
   } else if (scope === "saved" && userId) {
     const saved = await db.select({ recipeId: bookmarks.recipeId }).from(bookmarks).where(eq(bookmarks.userId, userId));
-    rows = saved.length ? await db.select().from(recipes).where(withFilters(inArray(recipes.id, saved.map((item) => item.recipeId)), or(eq(recipes.visibility, "public"), eq(recipes.userId, userId)))).orderBy(orderBy, desc(recipes.createdAt), desc(recipes.id)).limit(100) : [];
+    rows = saved.length ? await db.select().from(recipes).where(withFilters(inArray(recipes.id, saved.map((item) => item.recipeId)), or(and(eq(recipes.visibility, "public"), eq(recipes.moderationStatus, "visible")), eq(recipes.userId, userId)))).orderBy(orderBy, desc(recipes.createdAt), desc(recipes.id)).limit(100) : [];
   } else if (scope === "following" && userId) {
     const followed = await db.select({ userId: follows.followedUserId }).from(follows).where(eq(follows.followerUserId, userId));
-    rows = followed.length ? await db.select().from(recipes).where(withFilters(inArray(recipes.userId, followed.map((item) => item.userId)), eq(recipes.visibility, "public"))).orderBy(orderBy, desc(recipes.createdAt), desc(recipes.id)).limit(100) : [];
+    rows = followed.length ? await db.select().from(recipes).where(withFilters(inArray(recipes.userId, followed.map((item) => item.userId)), eq(recipes.visibility, "public"), eq(recipes.moderationStatus, "visible"))).orderBy(orderBy, desc(recipes.createdAt), desc(recipes.id)).limit(100) : [];
   } else if (scope === "profile" && profileUserId) {
     const ownProfile = userId === profileUserId;
-    rows = await db.select().from(recipes).where(withFilters(eq(recipes.userId, profileUserId), ownProfile ? undefined : eq(recipes.visibility, "public"))).orderBy(orderBy, desc(recipes.createdAt), desc(recipes.id)).limit(100);
+    rows = await db.select().from(recipes).where(withFilters(eq(recipes.userId, profileUserId), ownProfile ? undefined : eq(recipes.visibility, "public"), ownProfile ? undefined : eq(recipes.moderationStatus, "visible"))).orderBy(orderBy, desc(recipes.createdAt), desc(recipes.id)).limit(100);
   } else {
-    rows = await db.select().from(recipes).where(withFilters(eq(recipes.visibility, "public"))).orderBy(orderBy, desc(recipes.createdAt), desc(recipes.id)).limit(100);
+    rows = await db.select().from(recipes).where(withFilters(eq(recipes.visibility, "public"), eq(recipes.moderationStatus, "visible"))).orderBy(orderBy, desc(recipes.createdAt), desc(recipes.id)).limit(100);
   }
   const authors = rows.length ? await db.select({ userId: profiles.userId, displayName: profiles.displayName }).from(profiles).where(inArray(profiles.userId, [...new Set(rows.map((row) => row.userId))])) : [];
   const names = new Map(authors.map((author) => [author.userId, author.displayName]));
@@ -112,7 +112,7 @@ export async function listRecipes(scope: string, userId?: string, profileUserId?
   const countries = new Map(beanRows.map((bean) => [bean.id, bean.country]));
   return Promise.all(rows.map(async (row) => {
     const [likeCount] = await db.select({ count: sql<number>`count(*)` }).from(likes).where(eq(likes.recipeId, row.id));
-    const [commentCount] = await db.select({ count: sql<number>`count(*)` }).from(comments).where(eq(comments.recipeId, row.id));
+    const [commentCount] = await db.select({ count: sql<number>`count(*)` }).from(comments).where(and(eq(comments.recipeId, row.id), eq(comments.moderationStatus, "visible")));
     const liked = userId ? (await db.select({ userId: likes.userId }).from(likes).where(and(eq(likes.recipeId, row.id), eq(likes.userId, userId)))).length > 0 : false;
     const ownBookmark = userId ? await db.select({ note: bookmarks.note }).from(bookmarks).where(and(eq(bookmarks.recipeId, row.id), eq(bookmarks.userId, userId))).limit(1) : [];
     const saved = ownBookmark.length > 0;

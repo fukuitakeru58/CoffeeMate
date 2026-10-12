@@ -112,6 +112,7 @@ export const recipes = sqliteTable("recipes", {
   tasting: text("tasting").notNull().default(""),
   rating: integer("rating"),
   visibility: text("visibility").notNull().default("private"),
+  moderationStatus: text("moderation_status").notNull().default("visible"),
   createdAt: text("created_at").notNull(),
   updatedAt: text("updated_at").notNull(),
 });
@@ -139,5 +140,32 @@ export const comments = sqliteTable("comments", {
   userId: text("user_id").notNull(),
   authorName: text("author_name").notNull(),
   body: text("body").notNull(),
+  moderationStatus: text("moderation_status").notNull().default("visible"),
   createdAt: text("created_at").notNull(),
 });
+
+export const reports = sqliteTable("reports", {
+  id: text("id").primaryKey(),
+  reporterUserId: text("reporter_user_id").notNull(),
+  targetType: text("target_type").notNull(),
+  targetId: text("target_id").notNull(),
+  reason: text("reason").notNull(),
+  details: text("details").notNull().default(""),
+  status: text("status").notNull().default("open"),
+  createdAt: text("created_at").notNull(),
+  resolvedAt: text("resolved_at"),
+  resolvedBy: text("resolved_by"),
+}, (table) => [
+  uniqueIndex("reports_reporter_target_unique").on(table.reporterUserId, table.targetType, table.targetId),
+  index("reports_status_created_idx").on(table.status, table.createdAt),
+]);
+
+export const moderationActions = sqliteTable("moderation_actions", {
+  id: text("id").primaryKey(),
+  adminUserId: text("admin_user_id").notNull(),
+  targetType: text("target_type").notNull(),
+  targetId: text("target_id").notNull(),
+  action: text("action").notNull(),
+  reason: text("reason").notNull().default(""),
+  createdAt: text("created_at").notNull(),
+}, (table) => [index("moderation_actions_created_idx").on(table.createdAt)]);
