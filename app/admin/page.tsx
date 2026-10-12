@@ -1,8 +1,10 @@
+import type { Metadata } from "next";
 import { Coffee, LockKeyhole } from "lucide-react";
 import { ADMIN_SIGN_IN_PATH, getSiteAdmin } from "../../lib/site-admin";
 import AdminDashboard from "./admin-dashboard";
 
 export const dynamic = "force-dynamic";
+export const metadata: Metadata = { robots: { index: false, follow: false } };
 
 export default async function AdminPage() {
   const admin = await getSiteAdmin();
