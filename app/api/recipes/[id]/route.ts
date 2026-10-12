@@ -5,6 +5,7 @@ import { bookmarks, comments, likes, profiles, ratings, recipes } from "../../..
 import { parseRecipe } from "../../../../lib/recipes";
 import { generatedRecipeTitle, resolveBean } from "../../../../lib/catalog";
 import { getProfile } from "../../../../lib/profiles";
+import { env } from "cloudflare:workers";
 
 type Context = { params: Promise<{ id: string }> };
 
@@ -50,7 +51,8 @@ export async function DELETE(_: Request, context: Context) {
   const user = await getChatGPTUser();
   if (!user) return Response.json({ error: "ログインが必要です" }, { status: 401 });
   const { id } = await context.params;
-  const result = await getDb().delete(recipes).where(and(eq(recipes.id, id), eq(recipes.userId, user.userId))).returning({ id: recipes.id });
+  const result = await getDb().delete(recipes).where(and(eq(recipes.id, id), eq(recipes.userId, user.userId))).returning({ id: recipes.id, imageKey: recipes.imageKey });
   if (!result.length) return Response.json({ error: "削除できません" }, { status: 404 });
+  if (result[0].imageKey && env.BUCKET) await env.BUCKET.delete(result[0].imageKey);
   return Response.json({ ok: true });
 }

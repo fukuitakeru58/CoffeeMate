@@ -59,6 +59,7 @@ export const recipes = sqliteTable("recipes", {
   method: text("method").notNull(),
   bean: text("bean").notNull(),
   beanId: text("bean_id").references(() => beans.id, { onDelete: "set null" }),
+  imageKey: text("image_key"),
   roast: text("roast").notNull().default("中煎り"),
   grinder: text("grinder").notNull().default(""),
   grind: text("grind").notNull().default("中挽き"),

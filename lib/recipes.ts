@@ -25,7 +25,7 @@ const tenth = (value: number) => Math.round(value * 10) / 10;
 const half = (value: number) => Math.round(value * 2) / 2;
 const clicks = (value: unknown) => { const text = trim(value, 40); return /^\d{1,3}$/.test(text) && Number(text) <= 300 ? String(Number(text)) : ""; };
 const parseSteps = (value: unknown) => Array.isArray(value) ? value.slice(0, 12).map((item) => ({
-  time: number(item?.time, 0, 3600, 0),
+  time: number(item?.time, 0, 5999, 0),
   water: number(item?.water, 0, 3000, 0),
   note: trim(item?.note, 140),
 })) : [];
@@ -60,8 +60,8 @@ export function parseRecipe(value: unknown): RecipeInput | null {
     method,
     roast: trim(input.roast, 30) || "中煎り",
     grinder, grind, grindClicks, dose, water, temperature,
-    targetTime: number(input.targetTime, 0, 3600, 180),
-    actualTime: input.actualTime === null || input.actualTime === "" ? null : number(input.actualTime, 0, 3600, 180),
+    targetTime: number(input.targetTime, 0, 5999, 180),
+    actualTime: input.actualTime === null || input.actualTime === "" ? null : number(input.actualTime, 0, 5999, 180),
     actualBrew,
     hypothesis: trim(input.hypothesis, 2000),
     steps,

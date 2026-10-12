@@ -160,6 +160,64 @@ a.side-link { text-decoration: none; }
 .profile-back-link { display: inline-flex; align-items: center; gap: 5px; color: var(--olive); font-size: 11px; font-weight: 700; text-decoration: none; white-space: nowrap; }
 .profile-back-link:hover { text-decoration: underline; }
 
+.time-picker-field { display: flex; flex-direction: column; gap: 8px; margin-top: 12px; }
+.time-picker-label { color: #565a50; font-size: 11px; font-weight: 700; }
+.time-picker-trigger { width: fit-content; min-width: 180px; display: inline-flex; align-items: center; justify-content: space-between; gap: 10px; border: 1px solid #dedfd5; border-radius: 9px; background: #fff; color: var(--olive); padding: 10px 12px; }
+.time-picker-trigger strong { font-size: 20px; font-variant-numeric: tabular-nums; color: #384b36; letter-spacing: .05em; }
+.time-picker-trigger span { font-size: 10px; font-weight: 700; color: #858d7e; }
+.time-picker-trigger:hover,.time-picker-trigger:focus-visible { border-color: #93aa88; box-shadow: 0 0 0 3px #e2eddb; outline: none; }
+.time-picker-field.compact { margin: 0; flex: none; }
+.time-picker-field.compact .time-picker-trigger { min-width: 88px; padding: 7px; gap: 5px; }
+.time-picker-field.compact .time-picker-trigger strong { font-size: 13px; }
+.time-picker-field.compact .time-picker-trigger span { display: none; }
+.time-picker-backdrop { position: fixed; inset: 0; z-index: 500; display: flex; align-items: center; justify-content: center; padding: 18px; background: rgba(27,31,24,.6); backdrop-filter: blur(4px); }
+.time-picker-dialog { width: min(420px,100%); background: #fffefa; border-radius: 16px; box-shadow: 0 22px 70px #14191050; padding: 22px; }
+.time-picker-head { display: flex; justify-content: space-between; align-items: start; }
+.time-picker-head span { color: #9a9d82; letter-spacing: .13em; font-size: 10px; font-weight: 700; }
+.time-picker-head h3 { font-size: 20px; margin: 3px 0 0; }
+.time-picker-head > button { display: grid; place-items: center; background: #f1f2ec; color: #667363; border: 0; width: 32px; height: 32px; border-radius: 50%; }
+.time-picker-modes { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; margin-top: 18px; padding: 4px; border-radius: 9px; background: #f0f1eb; }
+.time-picker-modes button { border: 0; border-radius: 7px; background: transparent; color: #80887a; font-size: 12px; font-weight: 700; padding: 9px; }
+.time-picker-modes button.selected { background: white; color: var(--olive); box-shadow: 0 2px 8px #3d4c3420; }
+.time-picker-hint { color: #8d9386; text-align: center; font-size: 11px; margin: 18px 0 4px; }
+.time-wheel-row { display: flex; justify-content: center; gap: 6px; padding: 4px 0 0; }
+.time-wheel-slot { position: relative; }
+.time-wheel-colon { position: absolute; right: calc(100% + 2px); top: 72px; color: var(--olive); font-size: 30px; font-weight: 700; }
+.time-wheel-slot:nth-child(3) { margin-left: 16px; }
+.time-digit-wheel { width: 61px; text-align: center; }
+.time-digit-arrow { width: 48px; height: 30px; border: 0; background: transparent; color: #8ca183; display: inline-grid; place-items: center; }
+.time-digit-track { display: flex; flex-direction: column; align-items: center; justify-content: space-around; height: 126px; border: 1px solid #dce6d7; border-radius: 11px; background: linear-gradient(#f4f7f1 0%,#fff 25%,#fff 75%,#f4f7f1 100%); user-select: none; touch-action: none; cursor: grab; font-variant-numeric: tabular-nums; }
+.time-digit-track:focus-visible { outline: 3px solid #a3bf99; outline-offset: 2px; }
+.time-digit-track span { font-size: 19px; color: #b6c4b0; }
+.time-digit-track strong { font-size: 36px; line-height: 1; color: #3f5940; }
+.time-wheel-units { display: flex; justify-content: center; gap: 114px; color: #899586; font-size: 11px; font-weight: 700; }
+.time-keyboard-row { min-height: 243px; display: flex; justify-content: center; align-items: center; gap: 12px; }
+.time-keyboard-row label { display: flex; flex-direction: column; gap: 7px; color: #687867; font-size: 11px; font-weight: 700; text-align: center; }
+.time-keyboard-row input { width: 90px; border: 1px solid #d9e1d4; border-radius: 10px; padding: 12px; text-align: center; font-size: 29px; font-variant-numeric: tabular-nums; color: #39503a; background: white; }
+.time-keyboard-row > span { padding-top: 18px; color: #6c8267; font-size: 25px; }
+.time-picker-footer { margin-top: 16px; display: flex; gap: 10px; justify-content: flex-end; align-items: center; }
+.time-picker-footer .primary-button { min-width: 140px; }
+.time-picker-clear { border: 0; background: transparent; color: #8f766c; font-size: 11px; font-weight: 700; margin-right: auto; }
+
+.recipe-image-field { border: 1px solid #e4e8dd; border-radius: 10px; padding: 14px; background: #f9fbf6; }
+.recipe-image-copy strong { font-size: 11px; color: #515d4e; }
+.recipe-image-copy small { color: #9ba094; font-size: 10px; margin-left: 6px; }
+.recipe-image-copy p { margin: 5px 0 11px; color: #999e92; font-size: 10px; }
+.recipe-image-controls { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.recipe-image-controls img,.recipe-image-placeholder { width: 66px; height: 54px; object-fit: cover; border-radius: 7px; background: #e5e9df; }
+.recipe-image-placeholder { display: grid; place-items: center; color: #75846f; }
+.recipe-image-controls .outline-button { position: relative; overflow: hidden; cursor: pointer; padding: 10px; font-size: 11px; }
+.recipe-image-controls .outline-button input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+.recipe-image-remove { border: 0; background: transparent; color: #a37467; font-size: 11px; font-weight: 700; }
+.recipe-art-image,.detail-hero-image { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.recipe-art.with-image:before,.detail-hero.with-image:before { content: ''; position: absolute; inset: 0; width: auto; height: auto; border: 0; border-radius: 0; box-shadow: none; background: linear-gradient(180deg,#141b1640 0%,transparent 48%,#1117139c 100%); z-index: 1; }
+.recipe-art.with-image:after,.recipe-art.with-image .art-coffee-dot,.detail-hero.with-image .detail-cup { display: none; }
+.recipe-art.with-image .recipe-method,.recipe-art.with-image .recipe-art-bean { z-index: 2; }
+.detail-hero.with-image span,.detail-hero.with-image p { z-index: 2; position: relative; }
+.detail-hero.with-image p { position: absolute; }
+.profile-recipe-image { display: block; width: calc(100% + 40px); height: 112px; margin: -20px -20px 15px; object-fit: cover; border-radius: 10px 10px 0 0; }
+@media (max-width: 560px) { .time-picker-backdrop { align-items: flex-end; padding: 0; }.time-picker-dialog { width: 100%; border-radius: 18px 18px 0 0; padding: 20px 17px max(22px,env(safe-area-inset-bottom)); }.time-digit-wheel { width: min(17vw,61px); }.time-digit-track { height: 140px; }.time-picker-trigger { min-height: 44px; }.time-picker-field.compact .time-picker-trigger { min-height: 40px; } }
+
 .onboarding-wrap { max-width: 1050px; margin: 0 auto; padding: 80px 35px; display: grid; grid-template-columns: 1fr 430px; gap: 70px; align-items: center; }
 .onboarding-aside { position: relative; min-height: 470px; padding-top: 48px; }
 .onboarding-aside h1 { font-family: 'Playfair Display','Noto Sans JP',serif; font-size: clamp(32px,4.3vw,56px); line-height: 1.4; letter-spacing: -.05em; margin: 24px 0; }
