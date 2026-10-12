@@ -98,7 +98,9 @@ export default function CoffeeApp({ user }: { user: { id: string; name: string }
   useEffect(() => { void loadCatalogs(); }, [loadCatalogs]);
   useEffect(() => { void fetch("/api/search-options").then(async (response) => { if (response.ok) setSearchOptions(await response.json() as { countries: string[]; drippers: string[] }); }); }, []);
   useEffect(() => {
-    const id = new URLSearchParams(location.search).get("recipe");
+    const params = new URLSearchParams(location.search);
+    if (params.get("new") === "1") { startNew(); return; }
+    const id = params.get("recipe");
     if (id) void openDetail(id);
   }, []);
   useEffect(() => { if (!notice) return; const timer = setTimeout(() => setNotice(""), 4000); return () => clearTimeout(timer); }, [notice]);
@@ -112,7 +114,8 @@ export default function CoffeeApp({ user }: { user: { id: string; name: string }
   const clickMax = grinderOptions.find((item) => item.name === draft.grinder)?.maxClicks ?? 60;
   const clickNumber = Math.min(clickMax, Math.max(0, Number.parseInt(draft.grindClicks, 10) || 0));
 
-  function startNew() { if (!user) { location.href = "/login?return_to=/"; return; } setEditingId(null); setEditingImageKey(null); setImageFile(null); setRemoveImage(false); setDraft({ ...emptyDraft, steps: emptyDraft.steps.map((step) => ({ ...step })) }); setEditorOpen(true); }
+  function startNew() { if (!user) { location.href = "/login?return_to=%2F%3Fnew%3D1"; return; } setEditingId(null); setEditingImageKey(null); setImageFile(null); setRemoveImage(false); setDraft({ ...emptyDraft, steps: emptyDraft.steps.map((step) => ({ ...step })) }); setEditorOpen(true); }
+  function closeEditor() { setEditorOpen(false); if (new URLSearchParams(location.search).get("new") === "1") history.replaceState(null, "", "/"); }
   function edit(item: Recipe) { setEditingId(item.id); setEditingImageKey(item.imageKey); setImageFile(null); setRemoveImage(false); setDraft({ title: item.title, method: item.method, serving: item.serving, bean: item.bean, beanId: item.beanId, dripper: item.dripper, dripperId: item.dripperId, roast: item.roast, grinder: item.grinder, grind: item.grind, grindClicks: item.grindClicks, dose: item.dose, water: item.water, temperature: item.temperature, targetTime: item.targetTime, actualTime: item.actualTime, actualBrew: item.actualBrew, hypothesis: item.hypothesis, steps: item.steps, tasting: item.tasting, rating: item.rating, visibility: item.visibility }); setDetail(null); setEditorOpen(true); }
   function change<K extends keyof Draft>(key: K, value: Draft[K]) { setDraft((current) => ({ ...current, [key]: value })); }
 
@@ -130,7 +133,7 @@ export default function CoffeeApp({ user }: { user: { id: string; name: string }
         const removal = await fetch(`/api/recipes/${encodeURIComponent(data.id)}/image`, { method: "DELETE" });
         if (!removal.ok) throw new Error("レシピは保存しましたが、画像を削除できませんでした");
       }
-      setEditorOpen(false); setNotice(draft.visibility === "public" ? "レシピを公開しました" : "レシピを保存しました");
+      closeEditor(); setNotice(draft.visibility === "public" ? "レシピを公開しました" : "レシピを保存しました");
       setScope("mine"); await Promise.all([load("mine"), loadCatalogs()]);
     } catch (error) { setNotice(error instanceof Error ? error.message : "保存できませんでした"); }
     finally { setSaving(false); }
@@ -257,7 +260,7 @@ export default function CoffeeApp({ user }: { user: { id: string; name: string }
     </main>
 
     {advancedOpen && <div className="search-modal-backdrop" onMouseDown={(event) => { if (event.target === event.currentTarget) setAdvancedOpen(false); }}><div className="search-modal" role="dialog" aria-modal="true" aria-label="詳細な検索"><div className="search-modal-head"><h2>詳細な検索</h2><button type="button" onClick={() => setAdvancedOpen(false)} aria-label="閉じる"><X size={20} /></button></div><label>焙煎度<select value={pendingAdvanced.roast} onChange={(event) => setPendingAdvanced((current) => ({ ...current, roast: event.target.value }))}><option value="">すべて</option>{["浅煎り", "中浅煎り", "中煎り", "中深煎り", "深煎り"].map((value) => <option key={value}>{value}</option>)}</select></label><label>コーヒー豆の原産国<select value={pendingAdvanced.country} onChange={(event) => setPendingAdvanced((current) => ({ ...current, country: event.target.value }))}><option value="">すべて</option>{[...new Set(["エチオピア", "ケニア", "コロンビア", "ブラジル", "グアテマラ", "ルワンダ", "インドネシア", "タンザニア", "ホンジュラス", "コスタリカ", "パナマ", "エルサルバドル", "ペルー", "メキシコ", "中国", "イエメン", "ウガンダ", "ニカラグア", ...searchOptions.countries, ...beanOptions.map((bean) => bean.country).filter(Boolean)])].sort((a, b) => a.localeCompare(b, "ja")).map((value) => <option key={value}>{value}</option>)}</select></label><label>ドリッパー<select value={pendingAdvanced.dripper} onChange={(event) => setPendingAdvanced((current) => ({ ...current, dripper: event.target.value }))}><option value="">すべて</option>{[...new Set([...searchOptions.drippers, ...items.map((item) => item.dripper).filter(Boolean), ...dripperOptions.map((item) => item.name), ...DRIPPER_CATALOG])].sort((a, b) => a.localeCompare(b, "ja")).map((value) => <option key={value}>{value}</option>)}</select></label><div className="search-modal-actions"><button type="button" onClick={() => setPendingAdvanced({ roast: "", country: "", dripper: "" })}>条件をクリア</button><button type="button" className="primary-button" onClick={() => { setAdvanced(pendingAdvanced); setAdvancedOpen(false); }}>この条件で検索</button></div></div></div>}
-    {editorOpen && <div className="modal-backdrop" onMouseDown={(event) => { if (event.target === event.currentTarget) setEditorOpen(false); }}><div className="editor-panel" role="dialog" aria-modal="true" aria-label="レシピを編集"><div className="panel-header"><div><span className="panel-kicker">BREW JOURNAL</span><h2>{editingId ? "レシピを編集" : "新しいレシピ"}</h2></div><button className="icon-button" onClick={() => setEditorOpen(false)} aria-label="閉じる"><X size={21} /></button></div><div className="editor-scroll">
+    {editorOpen && <div className="modal-backdrop" onMouseDown={(event) => { if (event.target === event.currentTarget) closeEditor(); }}><div className="editor-panel" role="dialog" aria-modal="true" aria-label="レシピを編集"><div className="panel-header"><div><span className="panel-kicker">BREW JOURNAL</span><h2>{editingId ? "レシピを編集" : "新しいレシピ"}</h2></div><button className="icon-button" onClick={() => closeEditor()} aria-label="閉じる"><X size={21} /></button></div><div className="editor-scroll">
       <div className="editor-intro"><span className="intro-icon"><Sparkles size={21} /></span><div><strong>今日はどんな一杯を淹れたい？</strong><p>まずは狙う味と抽出の条件を決めましょう。</p></div></div>
       <div className="field-group">
         <label>レシピの名前 <span className="optional-tag">任意・空欄なら日付＋連番</span><input value={draft.title} onChange={(event) => change("title", event.target.value)} placeholder="例：朝のやさしいエチオピア" maxLength={100} /></label>

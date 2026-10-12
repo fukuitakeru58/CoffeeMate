@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import "./coffee.css";
+import FloatingCreate from "./floating-create";
 
 export const metadata: Metadata = {
   title: "CoffeeMate — 一杯を、もっと自分らしく。",
@@ -18,7 +19,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="ja">
-      <body className="antialiased">{children}</body>
+      <body className="antialiased">{children}<FloatingCreate /></body>
     </html>
   );
 }
