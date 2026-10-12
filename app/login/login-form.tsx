@@ -21,7 +21,7 @@ export default function LoginForm({ returnTo }: { returnTo: string }) {
     event.preventDefault(); setBusy(true); setError("");
     try {
       const response = await fetch(`/api/auth/${mode}`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ username, password, recoveryCode }) });
-      const data = await response.json() as { error?: string; recoveryCode?: string };
+      const data = await response.json().catch(() => ({})) as { error?: string; recoveryCode?: string };
       if (!response.ok) throw new Error(data.error || "操作を完了できませんでした");
       if (data.recoveryCode) { setNewRecoveryCode(data.recoveryCode); setPassword(""); }
       else location.assign(returnTo);

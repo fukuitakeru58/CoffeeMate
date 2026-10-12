@@ -4,7 +4,8 @@ import { authThrottles, localAccounts, localSessions } from "../db/schema";
 
 export const SESSION_COOKIE = "coffeemate_session";
 const SESSION_AGE_SECONDS = 60 * 60 * 24 * 30;
-const PASSWORD_ITERATIONS = 600_000;
+// Cloudflare Workers supports at most 100,000 PBKDF2 iterations per call.
+const PASSWORD_ITERATIONS = 100_000;
 
 export function parseUsername(value: unknown) {
   if (typeof value !== "string") return null;
