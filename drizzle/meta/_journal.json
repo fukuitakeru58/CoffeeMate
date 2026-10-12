@@ -15,6 +15,13 @@
       "when": 1791785662886,
       "tag": "0001_nervous_polaris",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1791787053004,
+      "tag": "0002_marvelous_swordsman",
+      "breakpoints": true
     }
   ]
 }

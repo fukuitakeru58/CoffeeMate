@@ -3,7 +3,7 @@ import { getDb } from "../db";
 import { bookmarks, comments, likes, ratings, recipes } from "../db/schema";
 
 export type RecipeInput = {
-  title: string; method: string; bean: string; roast: string; grinder: string;
+  title: string; method: string; bean: string; beanId: string | null; roast: string; grinder: string;
   grind: string; grindClicks: string; dose: number; water: number;
   temperature: number; targetTime: number; actualTime: number | null;
   hypothesis: string; steps: { time: number; water: number; note: string }[];
@@ -21,14 +21,13 @@ export function parseRecipe(value: unknown): RecipeInput | null {
   const input = value as Record<string, unknown>;
   const title = trim(input.title, 100);
   const bean = trim(input.bean, 100);
-  if (!title || !bean) return null;
   const steps = Array.isArray(input.steps) ? input.steps.slice(0, 12).map((item) => ({
     time: number(item?.time, 0, 3600, 0),
     water: number(item?.water, 0, 3000, 0),
     note: trim(item?.note, 140),
   })) : [];
   return {
-    title, bean,
+    title, bean, beanId: trim(input.beanId, 80) || null,
     method: trim(input.method, 40) || "ハンドドリップ",
     roast: trim(input.roast, 30) || "中煎り",
     grinder: trim(input.grinder, 80),

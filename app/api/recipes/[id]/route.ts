@@ -3,6 +3,7 @@ import { getChatGPTUser } from "../../../chatgpt-auth";
 import { getDb } from "../../../../db";
 import { bookmarks, comments, likes, ratings, recipes } from "../../../../db/schema";
 import { parseRecipe } from "../../../../lib/recipes";
+import { generatedRecipeTitle, resolveBean } from "../../../../lib/catalog";
 
 type Context = { params: Promise<{ id: string }> };
 
@@ -27,9 +28,15 @@ export async function PATCH(request: Request, context: Context) {
   const { id } = await context.params;
   let data;
   try { data = parseRecipe(await request.json()); } catch { return Response.json({ error: "入力を確認してください" }, { status: 400 }); }
-  if (!data) return Response.json({ error: "タイトルと豆の名前を入力してください" }, { status: 400 });
+  if (!data) return Response.json({ error: "入力を確認してください" }, { status: 400 });
   const db = getDb();
-  const result = await db.update(recipes).set({ ...data, steps: JSON.stringify(data.steps), updatedAt: new Date().toISOString() }).where(and(eq(recipes.id, id), eq(recipes.userId, user.userId))).returning({ id: recipes.id });
+  const [existing] = await db.select({ id: recipes.id }).from(recipes).where(and(eq(recipes.id, id), eq(recipes.userId, user.userId))).limit(1);
+  if (!existing) return Response.json({ error: "編集できません" }, { status: 404 });
+  let bean;
+  try { bean = await resolveBean(user.userId, data.beanId, data.bean); }
+  catch (error) { return Response.json({ error: error instanceof Error ? error.message : "豆を確認してください" }, { status: 400 }); }
+  const title = data.title || await generatedRecipeTitle(user.userId);
+  const result = await db.update(recipes).set({ ...data, title, bean: bean?.name ?? "", beanId: bean?.id ?? null, steps: JSON.stringify(data.steps), updatedAt: new Date().toISOString() }).where(and(eq(recipes.id, id), eq(recipes.userId, user.userId))).returning({ id: recipes.id });
   if (!result.length) return Response.json({ error: "編集できません" }, { status: 404 });
   return Response.json({ id });
 }

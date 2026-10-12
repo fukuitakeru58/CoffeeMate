@@ -1,4 +1,36 @@
-import { integer, primaryKey, real, sqliteTable, text } from "drizzle-orm/sqlite-core";
+import { integer, primaryKey, real, sqliteTable, text, uniqueIndex } from "drizzle-orm/sqlite-core";
+
+export const beans = sqliteTable("beans", {
+  id: text("id").primaryKey(),
+  userId: text("user_id").notNull(),
+  name: text("name").notNull(),
+  nameKey: text("name_key").notNull(),
+  country: text("country").notNull().default(""),
+  region: text("region").notNull().default(""),
+  farm: text("farm").notNull().default(""),
+  variety: text("variety").notNull().default(""),
+  process: text("process").notNull().default(""),
+  terroir: text("terroir").notNull().default(""),
+  purchasePlace: text("purchase_place").notNull().default(""),
+  purchaseMapUrl: text("purchase_map_url").notNull().default(""),
+  notes: text("notes").notNull().default(""),
+  createdAt: text("created_at").notNull(),
+  updatedAt: text("updated_at").notNull(),
+}, (table) => [uniqueIndex("beans_user_name_key").on(table.userId, table.nameKey)]);
+
+export const grinders = sqliteTable("grinders", {
+  id: text("id").primaryKey(),
+  userId: text("user_id").notNull(),
+  name: text("name").notNull(),
+  maxClicks: integer("max_clicks").notNull().default(60),
+  createdAt: text("created_at").notNull(),
+}, (table) => [uniqueIndex("grinders_user_name").on(table.userId, table.name)]);
+
+export const recipeCounters = sqliteTable("recipe_counters", {
+  userId: text("user_id").notNull(),
+  date: text("date").notNull(),
+  count: integer("count").notNull().default(0),
+}, (table) => [primaryKey({ columns: [table.userId, table.date] })]);
 
 export const recipes = sqliteTable("recipes", {
   id: text("id").primaryKey(),
@@ -7,6 +39,7 @@ export const recipes = sqliteTable("recipes", {
   title: text("title").notNull(),
   method: text("method").notNull(),
   bean: text("bean").notNull(),
+  beanId: text("bean_id").references(() => beans.id, { onDelete: "set null" }),
   roast: text("roast").notNull().default("中煎り"),
   grinder: text("grinder").notNull().default(""),
   grind: text("grind").notNull().default("中挽き"),
