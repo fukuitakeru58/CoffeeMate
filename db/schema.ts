@@ -1,4 +1,21 @@
-import { integer, primaryKey, real, sqliteTable, text, uniqueIndex } from "drizzle-orm/sqlite-core";
+import { index, integer, primaryKey, real, sqliteTable, text, uniqueIndex } from "drizzle-orm/sqlite-core";
+
+export const profiles = sqliteTable("profiles", {
+  userId: text("user_id").primaryKey(),
+  displayName: text("display_name").notNull(),
+  bio: text("bio").notNull().default(""),
+  createdAt: text("created_at").notNull(),
+  updatedAt: text("updated_at").notNull(),
+});
+
+export const follows = sqliteTable("follows", {
+  followerUserId: text("follower_user_id").notNull().references(() => profiles.userId, { onDelete: "cascade" }),
+  followedUserId: text("followed_user_id").notNull().references(() => profiles.userId, { onDelete: "cascade" }),
+  createdAt: text("created_at").notNull(),
+}, (table) => [
+  primaryKey({ columns: [table.followerUserId, table.followedUserId] }),
+  index("follows_followed_user_idx").on(table.followedUserId),
+]);
 
 export const beans = sqliteTable("beans", {
   id: text("id").primaryKey(),

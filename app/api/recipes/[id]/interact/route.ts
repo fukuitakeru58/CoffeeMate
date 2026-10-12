@@ -2,10 +2,12 @@ import { and, eq } from "drizzle-orm";
 import { getChatGPTUser } from "../../../../chatgpt-auth";
 import { getDb } from "../../../../../db";
 import { bookmarks, likes, recipes } from "../../../../../db/schema";
+import { getProfile } from "../../../../../lib/profiles";
 
 export async function POST(request: Request, context: { params: Promise<{ id: string }> }) {
   const user = await getChatGPTUser();
   if (!user) return Response.json({ error: "ログインが必要です" }, { status: 401 });
+  if (!await getProfile(user.userId)) return Response.json({ error: "先にマイページを作成してください" }, { status: 409 });
   const { id } = await context.params;
   const type = ((await request.json()) as { type?: unknown }).type;
   if (type !== "like" && type !== "bookmark") return Response.json({ error: "操作を確認してください" }, { status: 400 });
