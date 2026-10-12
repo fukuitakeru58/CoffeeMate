@@ -67,7 +67,7 @@ export function parseRecipe(value: unknown): RecipeInput | null {
     hypothesis: trim(input.hypothesis, 2000),
     steps,
     tasting: trim(input.tasting, 2000),
-    rating: input.rating === null || input.rating === "" ? null : number(input.rating, 1, 5, 3),
+    rating: input.rating == null || input.rating === "" ? null : number(input.rating, 1, 5, 3),
     visibility: input.visibility === "public" ? "public" : "private",
   };
 }

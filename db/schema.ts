@@ -8,6 +8,32 @@ export const profiles = sqliteTable("profiles", {
   updatedAt: text("updated_at").notNull(),
 });
 
+export const localAccounts = sqliteTable("local_accounts", {
+  userId: text("user_id").primaryKey().references(() => profiles.userId, { onDelete: "cascade" }),
+  username: text("username").notNull(),
+  usernameKey: text("username_key").notNull(),
+  passwordHash: text("password_hash").notNull(),
+  passwordSalt: text("password_salt").notNull(),
+  recoveryHash: text("recovery_hash").notNull(),
+  failedAttempts: integer("failed_attempts").notNull().default(0),
+  lockedUntil: text("locked_until"),
+  createdAt: text("created_at").notNull(),
+  updatedAt: text("updated_at").notNull(),
+}, (table) => [uniqueIndex("local_accounts_username_key").on(table.usernameKey)]);
+
+export const localSessions = sqliteTable("local_sessions", {
+  tokenHash: text("token_hash").primaryKey(),
+  userId: text("user_id").notNull().references(() => profiles.userId, { onDelete: "cascade" }),
+  expiresAt: text("expires_at").notNull(),
+  createdAt: text("created_at").notNull(),
+}, (table) => [index("local_sessions_user_idx").on(table.userId)]);
+
+export const authThrottles = sqliteTable("auth_throttles", {
+  bucketKey: text("bucket_key").primaryKey(),
+  attempts: integer("attempts").notNull().default(0),
+  expiresAt: text("expires_at").notNull(),
+}, (table) => [index("auth_throttles_expires_idx").on(table.expiresAt)]);
+
 export const follows = sqliteTable("follows", {
   followerUserId: text("follower_user_id").notNull().references(() => profiles.userId, { onDelete: "cascade" }),
   followedUserId: text("followed_user_id").notNull().references(() => profiles.userId, { onDelete: "cascade" }),

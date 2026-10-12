@@ -64,6 +64,20 @@
       "when": 1791808976149,
       "tag": "0008_elite_randall",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "6",
+      "when": 1791810976716,
+      "tag": "0009_woozy_justin_hammer",
+      "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "6",
+      "when": 1791811605302,
+      "tag": "0010_chief_the_anarchist",
+      "breakpoints": true
     }
   ]
 }
