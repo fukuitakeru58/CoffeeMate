@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Bookmark, Check, ChevronDown, Clock3, Coffee, Droplets, Heart, MessageCircle, Minus, Plus, Search, Share2, SlidersHorizontal, Sparkles, Thermometer, Trash2, X } from "lucide-react";
+import { Bookmark, Check, ChevronDown, Clock3, Coffee, Droplets, Heart, LogOut, MessageCircle, Minus, Plus, Search, Share2, SlidersHorizontal, Sparkles, Thermometer, Trash2, X } from "lucide-react";
 
 type Step = { time: number; water: number; note: string };
 type BrewConditions = { method: string; grinder: string; grind: string; grindClicks: string; dose: number; water: number; temperature: number; steps: Step[] };
@@ -172,7 +172,7 @@ export default function CoffeeApp({ user }: { user: { id: string; name: string }
     <header className="site-header"><div className="header-inner">
       <button className="brand" onClick={() => setScope("feed")} aria-label="CoffeeMate ホーム"><span className="brand-mark"><Coffee size={22} strokeWidth={2.1} /></span><span>Coffee<span className="brand-accent">Mate</span></span></button>
       <nav className="top-nav" aria-label="メインメニュー"><button className={scope === "feed" ? "active" : ""} onClick={() => setScope("feed")}>みんなのレシピ</button><button className={scope === "mine" ? "active" : ""} onClick={() => user ? setScope("mine") : location.href = "/signin-with-chatgpt?return_to=/"}>マイレシピ</button><button className={scope === "saved" ? "active" : ""} onClick={() => user ? setScope("saved") : location.href = "/signin-with-chatgpt?return_to=/"}>保存したレシピ</button><a href="/beans">コーヒー豆</a></nav>
-      <div className="header-actions">{user ? <span className="user-chip"><span className="avatar small">{initials(user.name)}</span><span className="user-name">{user.name}</span></span> : <a className="login-link" href="/signin-with-chatgpt?return_to=/" target="_top">ログイン</a>}<button className="primary-button header-create" onClick={startNew}><Plus size={17} /> レシピを作成</button></div>
+      <div className="header-actions">{user ? <><span className="user-chip"><span className="avatar small">{initials(user.name)}</span><span className="user-name">{user.name}</span></span><a className="logout-link" href="/signout-with-chatgpt?return_to=%2F" target="_top"><LogOut size={15} /> ログアウト</a></> : <a className="login-link" href="/signin-with-chatgpt?return_to=/" target="_top">ログイン</a>}<button className="primary-button header-create" onClick={startNew}><Plus size={17} /> レシピを作成</button></div>
     </div></header>
 
     <main className="main-wrap">
