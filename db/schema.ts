@@ -45,6 +45,14 @@ export const grinders = sqliteTable("grinders", {
   createdAt: text("created_at").notNull(),
 }, (table) => [uniqueIndex("grinders_user_name").on(table.userId, table.name)]);
 
+export const drippers = sqliteTable("drippers", {
+  id: text("id").primaryKey(),
+  userId: text("user_id").notNull(),
+  name: text("name").notNull(),
+  nameKey: text("name_key").notNull(),
+  createdAt: text("created_at").notNull(),
+}, (table) => [uniqueIndex("drippers_user_name_key").on(table.userId, table.nameKey)]);
+
 export const recipeCounters = sqliteTable("recipe_counters", {
   userId: text("user_id").notNull(),
   date: text("date").notNull(),
@@ -59,6 +67,8 @@ export const recipes = sqliteTable("recipes", {
   method: text("method").notNull(),
   bean: text("bean").notNull(),
   beanId: text("bean_id").references(() => beans.id, { onDelete: "set null" }),
+  dripper: text("dripper").notNull().default(""),
+  dripperId: text("dripper_id").references(() => drippers.id, { onDelete: "set null" }),
   imageKey: text("image_key"),
   roast: text("roast").notNull().default("中煎り"),
   grinder: text("grinder").notNull().default(""),

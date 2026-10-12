@@ -1,6 +1,6 @@
 import { and, desc, eq, inArray, sql } from "drizzle-orm";
 import { getDb } from "../db";
-import { bookmarks, comments, follows, likes, profiles, ratings, recipes } from "../db/schema";
+import { beans, bookmarks, comments, follows, likes, profiles, ratings, recipes } from "../db/schema";
 
 export type BrewConditions = {
   method: string; grinder: string; grind: string; grindClicks: string;
@@ -9,7 +9,7 @@ export type BrewConditions = {
 };
 
 export type RecipeInput = {
-  title: string; method: string; bean: string; beanId: string | null; roast: string; grinder: string;
+  title: string; method: string; bean: string; beanId: string | null; dripper: string; dripperId: string | null; roast: string; grinder: string;
   grind: string; grindClicks: string; dose: number; water: number;
   temperature: number; targetTime: number; actualTime: number | null; actualBrew: BrewConditions | null;
   hypothesis: string; steps: { time: number; water: number; note: string }[];
@@ -56,7 +56,7 @@ export function parseRecipe(value: unknown): RecipeInput | null {
     steps: parseSteps(actualInput.steps),
   } : null;
   return {
-    title, bean, beanId: trim(input.beanId, 80) || null,
+    title, bean, beanId: trim(input.beanId, 80) || null, dripper: trim(input.dripper, 100), dripperId: trim(input.dripperId, 80) || null,
     method,
     roast: trim(input.roast, 30) || "中煎り",
     grinder, grind, grindClicks, dose, water, temperature,
@@ -71,25 +71,36 @@ export function parseRecipe(value: unknown): RecipeInput | null {
   };
 }
 
-export async function listRecipes(scope: string, userId?: string, profileUserId?: string) {
+export async function listRecipes(scope: string, userId?: string, profileUserId?: string, filters: { roast?: string; country?: string; dripper?: string } = {}) {
   const db = getDb();
+  const countryBeans = filters.country ? await db.select({ id: beans.id }).from(beans).where(eq(beans.country, filters.country)) : [];
+  if (filters.country && !countryBeans.length) return [];
+  const filterConditions = [
+    filters.roast ? eq(recipes.roast, filters.roast) : undefined,
+    filters.dripper ? eq(recipes.dripper, filters.dripper) : undefined,
+    filters.country ? inArray(recipes.beanId, countryBeans.map((bean) => bean.id)) : undefined,
+  ].filter((condition) => condition !== undefined);
+  const withFilters = (...conditions: Parameters<typeof and>) => and(...conditions, ...filterConditions);
   let rows;
   if (scope === "mine" && userId) {
-    rows = await db.select().from(recipes).where(eq(recipes.userId, userId)).orderBy(desc(recipes.createdAt)).limit(100);
+    rows = await db.select().from(recipes).where(withFilters(eq(recipes.userId, userId))).orderBy(desc(recipes.createdAt)).limit(100);
   } else if (scope === "saved" && userId) {
     const saved = await db.select({ recipeId: bookmarks.recipeId }).from(bookmarks).where(eq(bookmarks.userId, userId));
-    rows = saved.length ? await db.select().from(recipes).where(and(inArray(recipes.id, saved.map((item) => item.recipeId)), eq(recipes.visibility, "public"))).orderBy(desc(recipes.createdAt)).limit(100) : [];
+    rows = saved.length ? await db.select().from(recipes).where(withFilters(inArray(recipes.id, saved.map((item) => item.recipeId)), eq(recipes.visibility, "public"))).orderBy(desc(recipes.createdAt)).limit(100) : [];
   } else if (scope === "following" && userId) {
     const followed = await db.select({ userId: follows.followedUserId }).from(follows).where(eq(follows.followerUserId, userId));
-    rows = followed.length ? await db.select().from(recipes).where(and(inArray(recipes.userId, followed.map((item) => item.userId)), eq(recipes.visibility, "public"))).orderBy(desc(recipes.createdAt)).limit(100) : [];
+    rows = followed.length ? await db.select().from(recipes).where(withFilters(inArray(recipes.userId, followed.map((item) => item.userId)), eq(recipes.visibility, "public"))).orderBy(desc(recipes.createdAt)).limit(100) : [];
   } else if (scope === "profile" && profileUserId) {
     const ownProfile = userId === profileUserId;
-    rows = await db.select().from(recipes).where(ownProfile ? eq(recipes.userId, profileUserId) : and(eq(recipes.userId, profileUserId), eq(recipes.visibility, "public"))).orderBy(desc(recipes.createdAt)).limit(100);
+    rows = await db.select().from(recipes).where(withFilters(eq(recipes.userId, profileUserId), ownProfile ? undefined : eq(recipes.visibility, "public"))).orderBy(desc(recipes.createdAt)).limit(100);
   } else {
-    rows = await db.select().from(recipes).where(eq(recipes.visibility, "public")).orderBy(desc(recipes.createdAt)).limit(100);
+    rows = await db.select().from(recipes).where(withFilters(eq(recipes.visibility, "public"))).orderBy(desc(recipes.createdAt)).limit(100);
   }
   const authors = rows.length ? await db.select({ userId: profiles.userId, displayName: profiles.displayName }).from(profiles).where(inArray(profiles.userId, [...new Set(rows.map((row) => row.userId))])) : [];
   const names = new Map(authors.map((author) => [author.userId, author.displayName]));
+  const selectedBeans = rows.filter((row) => row.beanId).map((row) => row.beanId!);
+  const beanRows = selectedBeans.length ? await db.select({ id: beans.id, country: beans.country }).from(beans).where(inArray(beans.id, selectedBeans)) : [];
+  const countries = new Map(beanRows.map((bean) => [bean.id, bean.country]));
   return Promise.all(rows.map(async (row) => {
     const [likeCount] = await db.select({ count: sql<number>`count(*)` }).from(likes).where(eq(likes.recipeId, row.id));
     const [commentCount] = await db.select({ count: sql<number>`count(*)` }).from(comments).where(eq(comments.recipeId, row.id));
@@ -97,6 +108,6 @@ export async function listRecipes(scope: string, userId?: string, profileUserId?
     const ownRating = userId ? await db.select({ score: ratings.score }).from(ratings).where(and(eq(ratings.recipeId, row.id), eq(ratings.userId, userId))) : [];
     const liked = userId ? (await db.select({ userId: likes.userId }).from(likes).where(and(eq(likes.recipeId, row.id), eq(likes.userId, userId)))).length > 0 : false;
     const saved = userId ? (await db.select({ userId: bookmarks.userId }).from(bookmarks).where(and(eq(bookmarks.recipeId, row.id), eq(bookmarks.userId, userId)))).length > 0 : false;
-    return { ...row, authorName: names.get(row.userId) ?? row.authorName, steps: JSON.parse(row.steps), actualBrew: row.actualBrew ? JSON.parse(row.actualBrew) : null, likeCount: likeCount.count, commentCount: commentCount.count, ratingCount: ratingSummary.count, averageRating: ratingSummary.average, userRating: ownRating[0]?.score ?? null, liked, saved };
+    return { ...row, beanCountry: row.beanId ? countries.get(row.beanId) ?? "" : "", authorName: names.get(row.userId) ?? row.authorName, steps: JSON.parse(row.steps), actualBrew: row.actualBrew ? JSON.parse(row.actualBrew) : null, likeCount: likeCount.count, commentCount: commentCount.count, ratingCount: ratingSummary.count, averageRating: ratingSummary.average, userRating: ownRating[0]?.score ?? null, liked, saved };
   }));
 }

@@ -10,17 +10,50 @@ const clamp = (value: number, max: number) => Math.min(max, Math.max(0, Number.i
 const format = (value: number | null) => value === null ? "未記録" : `${String(Math.floor(value / 60)).padStart(2, "0")}:${String(value % 60).padStart(2, "0")}`;
 
 function DigitWheel({ label, value, max, onChange }: { label: string; value: number; max: number; onChange: (digit: number) => void }) {
-  const startY = useRef<number | null>(null);
-  const turn = (delta: number) => onChange((value + delta + max + 1) % (max + 1));
+  const [offset, setOffset] = useState(0);
+  const valueRef = useRef(value);
+  const motion = useRef<{ y: number; time: number; velocity: number; offset: number; moved: boolean } | null>(null);
+  const frame = useRef<number | null>(null);
+  const step = 42;
+  useEffect(() => { valueRef.current = value; }, [value]);
+  useEffect(() => () => { if (frame.current !== null) cancelAnimationFrame(frame.current); }, []);
+  function stop() { if (frame.current !== null) cancelAnimationFrame(frame.current); frame.current = null; }
+  function turn(delta: number) { const next = (valueRef.current + delta + max + 1) % (max + 1); valueRef.current = next; onChange(next); }
+  function move(delta: number) {
+    const current = motion.current;
+    if (!current) return;
+    current.offset += delta;
+    const crossed = Math.trunc(current.offset / step);
+    if (crossed) { turn(-crossed); current.offset -= crossed * step; }
+    setOffset(current.offset);
+  }
+  function release() {
+    const current = motion.current;
+    if (!current) return;
+    const velocity = current.velocity;
+    if (!current.moved) { motion.current = null; setOffset(0); return; }
+    if (Math.abs(velocity) < 0.15 || window.matchMedia("(prefers-reduced-motion: reduce)").matches) { motion.current = null; setOffset(0); return; }
+    let last = performance.now();
+    let speed = Math.max(-1.8, Math.min(1.8, velocity));
+    const tick = (now: number) => {
+      const elapsed = Math.min(32, now - last); last = now;
+      move(speed * elapsed);
+      speed *= Math.exp(-elapsed / 230);
+      if (Math.abs(speed) < 0.025) { motion.current = null; setOffset(0); frame.current = null; }
+      else frame.current = requestAnimationFrame(tick);
+    };
+    frame.current = requestAnimationFrame(tick);
+  }
   return <div className="time-digit-wheel">
-    <button type="button" className="time-digit-arrow" onClick={() => turn(-1)} aria-label={`${label}を一つ戻す`}><ChevronUp size={19} /></button>
+    <button type="button" className="time-digit-arrow" onClick={() => { stop(); turn(-1); }} aria-label={`${label}を一つ戻す`}><ChevronUp size={19} /></button>
     <div className="time-digit-track" role="spinbutton" tabIndex={0} aria-label={label} aria-valuemin={0} aria-valuemax={max} aria-valuenow={value}
-      onKeyDown={(event) => { if (event.key === "ArrowUp") { event.preventDefault(); turn(-1); } if (event.key === "ArrowDown") { event.preventDefault(); turn(1); } }}
-      onPointerDown={(event) => { startY.current = event.clientY; event.currentTarget.setPointerCapture(event.pointerId); }}
-      onPointerUp={(event) => { if (startY.current === null) return; const distance = startY.current - event.clientY; startY.current = null; if (Math.abs(distance) >= 12) turn(Math.sign(distance) * Math.min(5, Math.max(1, Math.round(Math.abs(distance) / 32)))); }}>
-      <span aria-hidden="true">{(value + max) % (max + 1)}</span><strong>{value}</strong><span aria-hidden="true">{(value + 1) % (max + 1)}</span>
+      onKeyDown={(event) => { if (event.key === "ArrowUp") { event.preventDefault(); stop(); turn(-1); } if (event.key === "ArrowDown") { event.preventDefault(); stop(); turn(1); } }}
+      onPointerDown={(event) => { stop(); motion.current = { y: event.clientY, time: performance.now(), velocity: 0, offset: 0, moved: false }; setOffset(0); event.currentTarget.setPointerCapture(event.pointerId); }}
+      onPointerMove={(event) => { const current = motion.current; if (!current || !event.currentTarget.hasPointerCapture(event.pointerId)) return; const now = performance.now(); const delta = event.clientY - current.y; const elapsed = Math.max(1, now - current.time); current.velocity = current.velocity * 0.35 + (delta / elapsed) * 0.65; current.y = event.clientY; current.time = now; if (Math.abs(delta) > 0) current.moved = true; move(delta); }}
+      onPointerUp={release} onPointerCancel={() => { stop(); motion.current = null; setOffset(0); }}>
+      <span aria-hidden="true" style={{ transform: `translateY(${offset}px)` }}>{(value + max) % (max + 1)}</span><strong style={{ transform: `translateY(${offset}px)` }}>{value}</strong><span aria-hidden="true" style={{ transform: `translateY(${offset}px)` }}>{(value + 1) % (max + 1)}</span>
     </div>
-    <button type="button" className="time-digit-arrow" onClick={() => turn(1)} aria-label={`${label}を一つ進める`}><ChevronDown size={19} /></button>
+    <button type="button" className="time-digit-arrow" onClick={() => { stop(); turn(1); }} aria-label={`${label}を一つ進める`}><ChevronDown size={19} /></button>
   </div>;
 }
 
@@ -33,9 +66,12 @@ export default function TimePicker({ label, value, onChange, compact = false, al
   function openPicker() { setDraft(value ?? 0); setMode("dial"); setOpen(true); }
   function digitAt(index: number) { const minutes = Math.floor(draft / 60); const seconds = draft % 60; return [Math.floor(minutes / 10), minutes % 10, Math.floor(seconds / 10), seconds % 10][index]; }
   function setDigit(index: number, next: number) {
-    const digits = [0, 1, 2, 3].map(digitAt);
-    digits[index] = next;
-    setDraft((digits[0] * 10 + digits[1]) * 60 + digits[2] * 10 + digits[3]);
+    setDraft((current) => {
+      const minutes = Math.floor(current / 60); const seconds = current % 60;
+      const digits = [Math.floor(minutes / 10), minutes % 10, Math.floor(seconds / 10), seconds % 10];
+      digits[index] = next;
+      return (digits[0] * 10 + digits[1]) * 60 + digits[2] * 10 + digits[3];
+    });
   }
   function setPart(part: "minute" | "second", next: string) {
     const parsed = clamp(Number(next), part === "minute" ? 99 : 59);

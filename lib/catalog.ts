@@ -1,6 +1,6 @@
 import { and, eq, sql } from "drizzle-orm";
 import { getDb } from "../db";
-import { beans, recipeCounters } from "../db/schema";
+import { beans, drippers, recipeCounters } from "../db/schema";
 
 export function beanNameKey(name: string) {
   return name.normalize("NFKC").trim().replace(/\s+/g, " ").toLocaleLowerCase("ja-JP");
@@ -21,6 +21,21 @@ export async function resolveBean(userId: string, beanId: string | null, name: s
   await db.insert(beans).values({ id, userId, name: trimmed, nameKey, createdAt: now, updatedAt: now }).onConflictDoNothing();
   const [bean] = await db.select().from(beans).where(and(eq(beans.userId, userId), eq(beans.nameKey, nameKey))).limit(1);
   return bean ? { id: bean.id, name: bean.name } : null;
+}
+
+export async function resolveDripper(userId: string, dripperId: string | null, name: string) {
+  const db = getDb();
+  if (dripperId) {
+    const [dripper] = await db.select().from(drippers).where(and(eq(drippers.id, dripperId), eq(drippers.userId, userId))).limit(1);
+    if (!dripper) throw new Error("選択したドリッパーが見つかりません");
+    return { id: dripper.id, name: dripper.name };
+  }
+  const trimmed = name.trim().slice(0, 100);
+  if (!trimmed) return null;
+  const nameKey = beanNameKey(trimmed);
+  await db.insert(drippers).values({ id: crypto.randomUUID(), userId, name: trimmed, nameKey, createdAt: new Date().toISOString() }).onConflictDoNothing();
+  const [dripper] = await db.select().from(drippers).where(and(eq(drippers.userId, userId), eq(drippers.nameKey, nameKey))).limit(1);
+  return dripper ? { id: dripper.id, name: dripper.name } : null;
 }
 
 export async function generatedRecipeTitle(userId: string) {

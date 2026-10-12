@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { ArrowLeft, ArrowRight, Coffee, Heart, LogOut, Pencil, UserPlus, Users } from "lucide-react";
+import DripperPicker, { type DripperOption } from "../dripper-picker";
 
 type Profile = { userId: string; displayName: string; bio: string; createdAt: string; followerCount: number; followingCount: number; publicRecipeCount: number; isFollowing: boolean; isOwn: boolean };
 type RecipePreview = { id: string; title: string; method: string; bean: string; dose: number; water: number; temperature: number; createdAt: string; imageKey: string | null; visibility: "public" | "private" };
@@ -9,6 +10,7 @@ type RecipePreview = { id: string; title: string; method: string; bean: string; 
 export default function ProfileView({ profileId, initialName, initialBio, currentUserId }: { profileId: string; initialName: string; initialBio: string; currentUserId: string | null }) {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [recipes, setRecipes] = useState<RecipePreview[]>([]);
+  const [dripperOptions, setDripperOptions] = useState<DripperOption[]>([]);
   const [editing, setEditing] = useState(false);
   const [displayName, setDisplayName] = useState(initialName);
   const [bio, setBio] = useState(initialBio);
@@ -29,6 +31,7 @@ export default function ProfileView({ profileId, initialName, initialBio, curren
   }, [profileId]);
 
   useEffect(() => { void load().catch((cause) => setError(cause instanceof Error ? cause.message : "読み込めませんでした")); }, [load]);
+  useEffect(() => { if (!currentUserId || currentUserId !== profileId) return; void fetch("/api/drippers").then(async (response) => { if (response.ok) setDripperOptions(((await response.json()) as { drippers: DripperOption[] }).drippers); }); }, [currentUserId, profileId]);
 
   async function saveProfile(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -61,5 +64,6 @@ export default function ProfileView({ profileId, initialName, initialBio, curren
     <main className="profile-wrap"><section className="profile-banner"><div className="profile-banner-pattern" /><span>COFFEE PEOPLE</span></section><section className="profile-card"><div className="profile-avatar">{name.slice(0, 1).toUpperCase()}</div><div className="profile-intro"><span className="section-kicker">{own ? "MY COFFEE PAGE" : "COFFEE MATE PROFILE"}</span><h1>{name}</h1><p>{profile?.bio || initialBio || "コーヒーの記録を少しずつ。"}</p><div className="profile-counts"><span><strong>{profile?.publicRecipeCount ?? 0}</strong> 公開レシピ</span><span><strong>{profile?.followerCount ?? 0}</strong> フォロワー</span><span><strong>{profile?.followingCount ?? 0}</strong> フォロー中</span></div></div><div className="profile-actions">{own ? <button className="outline-button" onClick={() => { setDisplayName(name); setBio(profile?.bio || ""); setEditing(!editing); }}><Pencil size={15} /> {editing ? "編集を閉じる" : "プロフィールを編集"}</button> : currentUserId ? <button className={profile?.isFollowing ? "outline-button" : "primary-button"} disabled={busyFollow || !profile} onClick={() => void toggleFollow()}><UserPlus size={16} /> {profile?.isFollowing ? "フォロー中" : "フォローする"}</button> : <a className="primary-button" href={`/signin-with-chatgpt?return_to=${encodeURIComponent(`/users/${profileId}`)}`} target="_top"><UserPlus size={16} /> ログインしてフォロー</a>}</div></section>
     {editing && own && <form className="profile-edit" onSubmit={(event) => void saveProfile(event)}><h2>プロフィールを編集</h2><div className="profile-edit-fields"><label>表示名 <strong>必須</strong><input required maxLength={40} value={displayName} onChange={(event) => setDisplayName(event.target.value)} /></label><label>自己紹介 <span>任意</span><textarea rows={3} maxLength={500} value={bio} onChange={(event) => setBio(event.target.value)} placeholder="好きな豆や淹れ方など" /></label></div><button className="primary-button" type="submit" disabled={saving || !displayName.trim()}>{saving ? "保存中..." : "変更を保存"}</button></form>}
     {error && <p className="profile-error" role="alert">{error}</p>}
+    {own && <section className="profile-drippers"><div><span className="section-kicker">MY TOOLS</span><h2>マイドリッパー</h2><p>レシピ作成時にここで登録したドリッパーを選べます。</p></div><DripperPicker options={dripperOptions} onAdded={(item) => setDripperOptions((current) => current.some((saved) => saved.id === item.id) ? current : [...current, item])} onError={setError} /></section>}
     <section className="profile-recipes"><div className="profile-recipes-title"><div><span className="section-kicker">BREW JOURNAL</span><h2>{own ? "あなたのレシピ" : `${name}さんのレシピ`}</h2><p>{own ? "非公開のレシピもここに表示されます。" : "一般公開されたレシピをまとめて見られます。"}</p></div><span className="profile-recipes-count"><Coffee size={16} /> {recipes.length} 件</span></div>{recipes.length ? <div className="profile-recipe-grid">{recipes.map((recipe) => <a className="profile-recipe-card" key={recipe.id} href={`/?recipe=${encodeURIComponent(recipe.id)}`}>{recipe.imageKey && <img className="profile-recipe-image" src={`/api/recipes/${encodeURIComponent(recipe.id)}/image?v=${encodeURIComponent(recipe.imageKey)}`} alt="" loading="lazy" />}<span className="profile-recipe-method">{recipe.method}</span>{recipe.visibility === "private" && <span className="private-tag">非公開</span>}<h3>{recipe.title}</h3><p>{recipe.bean || "豆未設定"}</p><div className="profile-recipe-stats"><span>{recipe.dose}g</span><span>{recipe.water}ml</span><span>{recipe.temperature}℃</span></div><span className="profile-recipe-more">レシピを見る <ArrowRight size={15} /></span></a>)}</div> : <div className="profile-empty"><Users size={29} /><h3>公開レシピはまだありません</h3><p>{own ? "新しい一杯を記録してみましょう。" : "新しいレシピが投稿されるのを待ちましょう。"}</p>{own && <a className="primary-button" href="/">レシピを作成</a>}</div>}</section></main></div>;
 }

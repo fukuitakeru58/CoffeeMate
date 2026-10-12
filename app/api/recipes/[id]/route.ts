@@ -3,7 +3,7 @@ import { getChatGPTUser } from "../../../chatgpt-auth";
 import { getDb } from "../../../../db";
 import { bookmarks, comments, likes, profiles, ratings, recipes } from "../../../../db/schema";
 import { parseRecipe } from "../../../../lib/recipes";
-import { generatedRecipeTitle, resolveBean } from "../../../../lib/catalog";
+import { generatedRecipeTitle, resolveBean, resolveDripper } from "../../../../lib/catalog";
 import { getProfile } from "../../../../lib/profiles";
 import { env } from "cloudflare:workers";
 
@@ -39,10 +39,11 @@ export async function PATCH(request: Request, context: Context) {
   const [existing] = await db.select({ id: recipes.id }).from(recipes).where(and(eq(recipes.id, id), eq(recipes.userId, user.userId))).limit(1);
   if (!existing) return Response.json({ error: "編集できません" }, { status: 404 });
   let bean;
-  try { bean = await resolveBean(user.userId, data.beanId, data.bean); }
-  catch (error) { return Response.json({ error: error instanceof Error ? error.message : "豆を確認してください" }, { status: 400 }); }
+  let dripper;
+  try { bean = await resolveBean(user.userId, data.beanId, data.bean); dripper = await resolveDripper(user.userId, data.dripperId, data.dripper); }
+  catch (error) { return Response.json({ error: error instanceof Error ? error.message : "豆とドリッパーを確認してください" }, { status: 400 }); }
   const title = data.title || await generatedRecipeTitle(user.userId);
-  const result = await db.update(recipes).set({ ...data, title, authorName: profile.displayName, bean: bean?.name ?? "", beanId: bean?.id ?? null, steps: JSON.stringify(data.steps), actualBrew: data.actualBrew ? JSON.stringify(data.actualBrew) : null, updatedAt: new Date().toISOString() }).where(and(eq(recipes.id, id), eq(recipes.userId, user.userId))).returning({ id: recipes.id });
+  const result = await db.update(recipes).set({ ...data, title, authorName: profile.displayName, bean: bean?.name ?? "", beanId: bean?.id ?? null, dripper: dripper?.name ?? "", dripperId: dripper?.id ?? null, steps: JSON.stringify(data.steps), actualBrew: data.actualBrew ? JSON.stringify(data.actualBrew) : null, updatedAt: new Date().toISOString() }).where(and(eq(recipes.id, id), eq(recipes.userId, user.userId))).returning({ id: recipes.id });
   if (!result.length) return Response.json({ error: "編集できません" }, { status: 404 });
   return Response.json({ id });
 }
