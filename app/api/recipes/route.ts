@@ -25,7 +25,7 @@ export async function POST(request: Request) {
   try {
     const bean = await resolveBean(user.userId, data.beanId, data.bean);
     const title = data.title || await generatedRecipeTitle(user.userId);
-    const recipe = { ...data, title, bean: bean?.name ?? "", beanId: bean?.id ?? null, id: crypto.randomUUID(), userId: user.userId, authorName: user.displayName, steps: JSON.stringify(data.steps), createdAt: now, updatedAt: now };
+    const recipe = { ...data, title, bean: bean?.name ?? "", beanId: bean?.id ?? null, id: crypto.randomUUID(), userId: user.userId, authorName: user.displayName, steps: JSON.stringify(data.steps), actualBrew: data.actualBrew ? JSON.stringify(data.actualBrew) : null, createdAt: now, updatedAt: now };
     await getDb().insert(recipes).values(recipe);
     return Response.json({ id: recipe.id }, { status: 201 });
   } catch (error) {

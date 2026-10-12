@@ -27,6 +27,10 @@ export async function PATCH(request: Request, context: Context) {
   catch { return Response.json({ error: "入力を確認してください" }, { status: 400 }); }
   const name = value(payload.name, 100);
   if (!name) return Response.json({ error: "豆の名前を入力してください" }, { status: 400 });
+  const roast = value(payload.roast, 30);
+  if (roast && !["浅煎り", "中浅煎り", "中煎り", "中深煎り", "深煎り"].includes(roast)) return Response.json({ error: "焙煎度を選択してください" }, { status: 400 });
+  const altitude = payload.altitude === null || payload.altitude === "" || payload.altitude === undefined ? null : Number(payload.altitude);
+  if (altitude !== null && (!Number.isInteger(altitude) || altitude < 0 || altitude > 6000)) return Response.json({ error: "標高は0〜6000mの整数で入力してください" }, { status: 400 });
   const purchaseMapUrl = parseMapUrl(payload.purchaseMapUrl);
   if (purchaseMapUrl === null) return Response.json({ error: "Google マップか OpenStreetMap のHTTPSリンクを入力してください" }, { status: 400 });
   const db = getDb();
@@ -34,7 +38,7 @@ export async function PATCH(request: Request, context: Context) {
   if (!existing) return Response.json({ error: "豆が見つかりません" }, { status: 404 });
   const patch = {
     name, nameKey: beanNameKey(name), country: value(payload.country, 80), region: value(payload.region, 120),
-    farm: value(payload.farm, 120), variety: value(payload.variety, 120), process: value(payload.process, 120),
+    farm: value(payload.farm, 120), variety: value(payload.variety, 120), roast, altitude, process: value(payload.process, 120),
     terroir: value(payload.terroir, 2000), purchasePlace: value(payload.purchasePlace, 160),
     purchaseMapUrl, notes: value(payload.notes, 2000), updatedAt: new Date().toISOString(),
   };
