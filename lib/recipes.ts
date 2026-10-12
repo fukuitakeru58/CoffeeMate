@@ -1,6 +1,6 @@
-import { and, desc, eq, inArray, or, sql } from "drizzle-orm";
+import { and, asc, desc, eq, inArray, or, sql } from "drizzle-orm";
 import { getDb } from "../db";
-import { beans, bookmarks, comments, follows, likes, profiles, ratings, recipes } from "../db/schema";
+import { beans, bookmarks, comments, follows, likes, profiles, recipes } from "../db/schema";
 
 export type BrewConditions = {
   method: string; grinder: string; grind: string; grindClicks: string;
@@ -72,8 +72,16 @@ export function parseRecipe(value: unknown): RecipeInput | null {
   };
 }
 
-export async function listRecipes(scope: string, userId?: string, profileUserId?: string, filters: { roast?: string; country?: string; dripper?: string } = {}) {
+export type RecipeSort = "date" | "likes" | "saves" | "comments";
+export type SortDirection = "asc" | "desc";
+
+export async function listRecipes(scope: string, userId?: string, profileUserId?: string, filters: { roast?: string; country?: string; dripper?: string; sort?: RecipeSort; direction?: SortDirection } = {}) {
   const db = getDb();
+  const sortColumn = filters.sort === "likes" ? sql<number>`(select count(*) from ${likes} where ${likes.recipeId} = ${recipes.id})`
+    : filters.sort === "saves" ? sql<number>`(select count(*) from ${bookmarks} where ${bookmarks.recipeId} = ${recipes.id})`
+    : filters.sort === "comments" ? sql<number>`(select count(*) from ${comments} where ${comments.recipeId} = ${recipes.id})`
+    : recipes.createdAt;
+  const orderBy = filters.direction === "asc" ? asc(sortColumn) : desc(sortColumn);
   const countryBeans = filters.country ? await db.select({ id: beans.id }).from(beans).where(eq(beans.country, filters.country)) : [];
   if (filters.country && !countryBeans.length) return [];
   const filterConditions = [
@@ -84,18 +92,18 @@ export async function listRecipes(scope: string, userId?: string, profileUserId?
   const withFilters = (...conditions: Parameters<typeof and>) => and(...conditions, ...filterConditions);
   let rows;
   if (scope === "mine" && userId) {
-    rows = await db.select().from(recipes).where(withFilters(eq(recipes.userId, userId))).orderBy(desc(recipes.createdAt)).limit(100);
+    rows = await db.select().from(recipes).where(withFilters(eq(recipes.userId, userId))).orderBy(orderBy, desc(recipes.createdAt), desc(recipes.id)).limit(100);
   } else if (scope === "saved" && userId) {
     const saved = await db.select({ recipeId: bookmarks.recipeId }).from(bookmarks).where(eq(bookmarks.userId, userId));
-    rows = saved.length ? await db.select().from(recipes).where(withFilters(inArray(recipes.id, saved.map((item) => item.recipeId)), or(eq(recipes.visibility, "public"), eq(recipes.userId, userId)))).orderBy(desc(recipes.createdAt)).limit(100) : [];
+    rows = saved.length ? await db.select().from(recipes).where(withFilters(inArray(recipes.id, saved.map((item) => item.recipeId)), or(eq(recipes.visibility, "public"), eq(recipes.userId, userId)))).orderBy(orderBy, desc(recipes.createdAt), desc(recipes.id)).limit(100) : [];
   } else if (scope === "following" && userId) {
     const followed = await db.select({ userId: follows.followedUserId }).from(follows).where(eq(follows.followerUserId, userId));
-    rows = followed.length ? await db.select().from(recipes).where(withFilters(inArray(recipes.userId, followed.map((item) => item.userId)), eq(recipes.visibility, "public"))).orderBy(desc(recipes.createdAt)).limit(100) : [];
+    rows = followed.length ? await db.select().from(recipes).where(withFilters(inArray(recipes.userId, followed.map((item) => item.userId)), eq(recipes.visibility, "public"))).orderBy(orderBy, desc(recipes.createdAt), desc(recipes.id)).limit(100) : [];
   } else if (scope === "profile" && profileUserId) {
     const ownProfile = userId === profileUserId;
-    rows = await db.select().from(recipes).where(withFilters(eq(recipes.userId, profileUserId), ownProfile ? undefined : eq(recipes.visibility, "public"))).orderBy(desc(recipes.createdAt)).limit(100);
+    rows = await db.select().from(recipes).where(withFilters(eq(recipes.userId, profileUserId), ownProfile ? undefined : eq(recipes.visibility, "public"))).orderBy(orderBy, desc(recipes.createdAt), desc(recipes.id)).limit(100);
   } else {
-    rows = await db.select().from(recipes).where(withFilters(eq(recipes.visibility, "public"))).orderBy(desc(recipes.createdAt)).limit(100);
+    rows = await db.select().from(recipes).where(withFilters(eq(recipes.visibility, "public"))).orderBy(orderBy, desc(recipes.createdAt), desc(recipes.id)).limit(100);
   }
   const authors = rows.length ? await db.select({ userId: profiles.userId, displayName: profiles.displayName }).from(profiles).where(inArray(profiles.userId, [...new Set(rows.map((row) => row.userId))])) : [];
   const names = new Map(authors.map((author) => [author.userId, author.displayName]));
@@ -105,11 +113,9 @@ export async function listRecipes(scope: string, userId?: string, profileUserId?
   return Promise.all(rows.map(async (row) => {
     const [likeCount] = await db.select({ count: sql<number>`count(*)` }).from(likes).where(eq(likes.recipeId, row.id));
     const [commentCount] = await db.select({ count: sql<number>`count(*)` }).from(comments).where(eq(comments.recipeId, row.id));
-    const [ratingSummary] = await db.select({ count: sql<number>`count(*)`, average: sql<number | null>`avg(${ratings.score})` }).from(ratings).where(eq(ratings.recipeId, row.id));
-    const ownRating = userId ? await db.select({ score: ratings.score }).from(ratings).where(and(eq(ratings.recipeId, row.id), eq(ratings.userId, userId))) : [];
     const liked = userId ? (await db.select({ userId: likes.userId }).from(likes).where(and(eq(likes.recipeId, row.id), eq(likes.userId, userId)))).length > 0 : false;
     const ownBookmark = userId ? await db.select({ note: bookmarks.note }).from(bookmarks).where(and(eq(bookmarks.recipeId, row.id), eq(bookmarks.userId, userId))).limit(1) : [];
     const saved = ownBookmark.length > 0;
-    return { ...row, beanCountry: row.beanId ? countries.get(row.beanId) ?? "" : "", authorName: names.get(row.userId) ?? row.authorName, steps: JSON.parse(row.steps), actualBrew: row.actualBrew ? JSON.parse(row.actualBrew) : null, likeCount: likeCount.count, commentCount: commentCount.count, ratingCount: ratingSummary.count, averageRating: ratingSummary.average, userRating: ownRating[0]?.score ?? null, liked, saved, saveNote: ownBookmark[0]?.note ?? null };
+    return { ...row, beanCountry: row.beanId ? countries.get(row.beanId) ?? "" : "", authorName: names.get(row.userId) ?? row.authorName, steps: JSON.parse(row.steps), actualBrew: row.actualBrew ? JSON.parse(row.actualBrew) : null, likeCount: likeCount.count, commentCount: commentCount.count, liked, saved, saveNote: ownBookmark[0]?.note ?? null };
   }));
 }

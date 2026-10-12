@@ -1,7 +1,7 @@
 import { and, eq, inArray, sql } from "drizzle-orm";
 import { getChatGPTUser } from "../../../chatgpt-auth";
 import { getDb } from "../../../../db";
-import { bookmarks, comments, likes, profiles, ratings, recipes } from "../../../../db/schema";
+import { bookmarks, comments, likes, profiles, recipes } from "../../../../db/schema";
 import { parseRecipe } from "../../../../lib/recipes";
 import { generatedRecipeTitle, resolveBean, resolveDripper } from "../../../../lib/catalog";
 import { getProfile } from "../../../../lib/profiles";
@@ -19,12 +19,10 @@ export async function GET(_: Request, context: Context) {
   const authors = await db.select({ userId: profiles.userId, displayName: profiles.displayName }).from(profiles).where(inArray(profiles.userId, [...new Set([recipe.userId, ...thread.map((comment) => comment.userId)])]));
   const names = new Map(authors.map((author) => [author.userId, author.displayName]));
   const [likeCount] = await db.select({ count: sql<number>`count(*)` }).from(likes).where(eq(likes.recipeId, id));
-  const [ratingSummary] = await db.select({ count: sql<number>`count(*)`, average: sql<number | null>`avg(${ratings.score})` }).from(ratings).where(eq(ratings.recipeId, id));
-  const ownRating = user ? await db.select({ score: ratings.score }).from(ratings).where(and(eq(ratings.recipeId, id), eq(ratings.userId, user.userId))) : [];
   const liked = user ? (await db.select().from(likes).where(and(eq(likes.recipeId, id), eq(likes.userId, user.userId)))).length > 0 : false;
   const ownBookmark = user ? await db.select({ note: bookmarks.note }).from(bookmarks).where(and(eq(bookmarks.recipeId, id), eq(bookmarks.userId, user.userId))).limit(1) : [];
   const saved = ownBookmark.length > 0;
-  return Response.json({ recipe: { ...recipe, authorName: names.get(recipe.userId) ?? recipe.authorName, steps: JSON.parse(recipe.steps), actualBrew: recipe.actualBrew ? JSON.parse(recipe.actualBrew) : null, likeCount: likeCount.count, commentCount: thread.length, ratingCount: ratingSummary.count, averageRating: ratingSummary.average, userRating: ownRating[0]?.score ?? null, liked, saved, saveNote: ownBookmark[0]?.note ?? null }, comments: thread.map((comment) => ({ ...comment, authorName: names.get(comment.userId) ?? comment.authorName })) });
+  return Response.json({ recipe: { ...recipe, authorName: names.get(recipe.userId) ?? recipe.authorName, steps: JSON.parse(recipe.steps), actualBrew: recipe.actualBrew ? JSON.parse(recipe.actualBrew) : null, likeCount: likeCount.count, commentCount: thread.length, liked, saved, saveNote: ownBookmark[0]?.note ?? null }, comments: thread.map((comment) => ({ ...comment, authorName: names.get(comment.userId) ?? comment.authorName })) });
 }
 
 export async function PATCH(request: Request, context: Context) {
