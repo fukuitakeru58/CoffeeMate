@@ -1,6 +1,6 @@
 import { env } from "cloudflare:workers";
 import { and, eq } from "drizzle-orm";
-import { getChatGPTUser } from "../../../../chatgpt-auth";
+import { getAuthUser } from "../../../../auth";
 import { getDb } from "../../../../../db";
 import { recipes } from "../../../../../db/schema";
 
@@ -15,7 +15,7 @@ async function findRecipe(id: string) {
 
 export async function GET(_: Request, context: Context) {
   const { id } = await context.params;
-  const user = await getChatGPTUser();
+  const user = await getAuthUser();
   const recipe = await findRecipe(id);
   if (!recipe || !recipe.imageKey || (recipe.visibility !== "public" && recipe.userId !== user?.userId)) return new Response(null, { status: 404 });
   if (!env.BUCKET) return new Response(null, { status: 503 });
@@ -25,7 +25,7 @@ export async function GET(_: Request, context: Context) {
 }
 
 export async function PUT(request: Request, context: Context) {
-  const user = await getChatGPTUser();
+  const user = await getAuthUser();
   if (!user) return Response.json({ error: "ログインが必要です" }, { status: 401 });
   const { id } = await context.params;
   const recipe = await findRecipe(id);
@@ -49,7 +49,7 @@ export async function PUT(request: Request, context: Context) {
 }
 
 export async function DELETE(_: Request, context: Context) {
-  const user = await getChatGPTUser();
+  const user = await getAuthUser();
   if (!user) return Response.json({ error: "ログインが必要です" }, { status: 401 });
   const { id } = await context.params;
   const recipe = await findRecipe(id);

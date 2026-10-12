@@ -1,17 +1,17 @@
 import { eq } from "drizzle-orm";
-import { getChatGPTUser } from "../../chatgpt-auth";
+import { getAuthUser } from "../../auth";
 import { getDb } from "../../../db";
 import { profiles } from "../../../db/schema";
 import { getProfile, parseProfileInput, syncAuthorName } from "../../../lib/profiles";
 
 export async function GET() {
-  const user = await getChatGPTUser();
+  const user = await getAuthUser();
   if (!user) return Response.json({ error: "ログインが必要です" }, { status: 401 });
   return Response.json({ profile: await getProfile(user.userId) });
 }
 
 export async function POST(request: Request) {
-  const user = await getChatGPTUser();
+  const user = await getAuthUser();
   if (!user) return Response.json({ error: "ログインが必要です" }, { status: 401 });
   let input;
   try { input = parseProfileInput(await request.json()); }
@@ -26,7 +26,7 @@ export async function POST(request: Request) {
 }
 
 export async function PATCH(request: Request) {
-  const user = await getChatGPTUser();
+  const user = await getAuthUser();
   if (!user) return Response.json({ error: "ログインが必要です" }, { status: 401 });
   let input;
   try { input = parseProfileInput(await request.json()); }

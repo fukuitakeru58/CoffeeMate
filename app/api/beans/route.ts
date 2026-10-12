@@ -1,18 +1,18 @@
 import { desc, eq } from "drizzle-orm";
-import { getChatGPTUser } from "../../chatgpt-auth";
+import { getAuthUser } from "../../auth";
 import { getDb } from "../../../db";
 import { beans } from "../../../db/schema";
 import { resolveBean } from "../../../lib/catalog";
 
 export async function GET() {
-  const user = await getChatGPTUser();
+  const user = await getAuthUser();
   if (!user) return Response.json({ error: "ログインが必要です" }, { status: 401 });
   const rows = await getDb().select().from(beans).where(eq(beans.userId, user.userId)).orderBy(desc(beans.updatedAt));
   return Response.json({ beans: rows });
 }
 
 export async function POST(request: Request) {
-  const user = await getChatGPTUser();
+  const user = await getAuthUser();
   if (!user) return Response.json({ error: "ログインが必要です" }, { status: 401 });
   let name = "";
   try { name = String(((await request.json()) as { name?: unknown }).name ?? "").trim().slice(0, 100); }

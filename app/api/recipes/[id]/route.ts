@@ -1,5 +1,5 @@
 import { and, eq, inArray, sql } from "drizzle-orm";
-import { getChatGPTUser } from "../../../chatgpt-auth";
+import { getAuthUser } from "../../../auth";
 import { getDb } from "../../../../db";
 import { bookmarks, comments, likes, profiles, recipes } from "../../../../db/schema";
 import { parseRecipe } from "../../../../lib/recipes";
@@ -11,7 +11,7 @@ type Context = { params: Promise<{ id: string }> };
 
 export async function GET(_: Request, context: Context) {
   const { id } = await context.params;
-  const user = await getChatGPTUser();
+  const user = await getAuthUser();
   const db = getDb();
   const [recipe] = await db.select().from(recipes).where(eq(recipes.id, id)).limit(1);
   if (!recipe || (recipe.visibility !== "public" && recipe.userId !== user?.userId)) return Response.json({ error: "レシピが見つかりません" }, { status: 404 });
@@ -26,7 +26,7 @@ export async function GET(_: Request, context: Context) {
 }
 
 export async function PATCH(request: Request, context: Context) {
-  const user = await getChatGPTUser();
+  const user = await getAuthUser();
   if (!user) return Response.json({ error: "ログインが必要です" }, { status: 401 });
   const profile = await getProfile(user.userId);
   if (!profile) return Response.json({ error: "先にマイページを作成してください" }, { status: 409 });
@@ -48,7 +48,7 @@ export async function PATCH(request: Request, context: Context) {
 }
 
 export async function DELETE(_: Request, context: Context) {
-  const user = await getChatGPTUser();
+  const user = await getAuthUser();
   if (!user) return Response.json({ error: "ログインが必要です" }, { status: 401 });
   const { id } = await context.params;
   const result = await getDb().delete(recipes).where(and(eq(recipes.id, id), eq(recipes.userId, user.userId))).returning({ id: recipes.id, imageKey: recipes.imageKey });

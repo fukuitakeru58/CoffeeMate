@@ -1,5 +1,5 @@
 import { and, eq, sql } from "drizzle-orm";
-import { getChatGPTUser } from "../../../../chatgpt-auth";
+import { getAuthUser } from "../../../../auth";
 import { getDb } from "../../../../../db";
 import { follows, profiles } from "../../../../../db/schema";
 import { getProfile } from "../../../../../lib/profiles";
@@ -7,7 +7,7 @@ import { getProfile } from "../../../../../lib/profiles";
 type Context = { params: Promise<{ id: string }> };
 
 async function check(context: Context) {
-  const user = await getChatGPTUser();
+  const user = await getAuthUser();
   if (!user) return { error: Response.json({ error: "ログインが必要です" }, { status: 401 }) };
   if (!await getProfile(user.userId)) return { error: Response.json({ error: "先にマイページを作成してください" }, { status: 409 }) };
   const { id } = await context.params;

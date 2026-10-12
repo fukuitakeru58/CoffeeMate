@@ -11,7 +11,7 @@ export async function POST(request: Request) {
   const parsed = parseUsername(input.username);
   const code = typeof input.recoveryCode === "string" ? input.recoveryCode.trim() : "";
   if (!parsed || !/^[A-Za-z0-9_-]{32}$/.test(code)) return Response.json({ error: "ユーザー名または復旧コードを確認してください" }, { status: 401 });
-  const invalidPassword = passwordError(input.password, parsed.username);
+  const invalidPassword = passwordError(input.password);
   if (invalidPassword) return Response.json({ error: invalidPassword }, { status: 400 });
   const db = getDb();
   const [account] = await db.select().from(localAccounts).where(eq(localAccounts.usernameKey, parsed.usernameKey)).limit(1);

@@ -1,18 +1,18 @@
 import { asc, and, eq } from "drizzle-orm";
-import { getChatGPTUser } from "../../chatgpt-auth";
+import { getAuthUser } from "../../auth";
 import { getDb } from "../../../db";
 import { drippers, recipes } from "../../../db/schema";
 import { resolveDripper } from "../../../lib/catalog";
 
 export async function GET() {
-  const user = await getChatGPTUser();
+  const user = await getAuthUser();
   if (!user) return Response.json({ error: "ログインが必要です" }, { status: 401 });
   const rows = await getDb().select().from(drippers).where(eq(drippers.userId, user.userId)).orderBy(asc(drippers.name));
   return Response.json({ drippers: rows });
 }
 
 export async function POST(request: Request) {
-  const user = await getChatGPTUser();
+  const user = await getAuthUser();
   if (!user) return Response.json({ error: "ログインが必要です" }, { status: 401 });
   let payload: { name?: unknown };
   try { payload = await request.json() as { name?: unknown }; }
@@ -24,7 +24,7 @@ export async function POST(request: Request) {
 }
 
 export async function DELETE(request: Request) {
-  const user = await getChatGPTUser();
+  const user = await getAuthUser();
   if (!user) return Response.json({ error: "ログインが必要です" }, { status: 401 });
   const id = new URL(request.url).searchParams.get("id");
   if (!id) return Response.json({ error: "ドリッパーを指定してください" }, { status: 400 });

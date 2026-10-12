@@ -1,4 +1,4 @@
-import { getChatGPTUser } from "../../chatgpt-auth";
+import { getAuthUser } from "../../auth";
 import { getDb } from "../../../db";
 import { recipes } from "../../../db/schema";
 import { listRecipes, parseRecipe, type RecipeSort, type SortDirection } from "../../../lib/recipes";
@@ -6,7 +6,7 @@ import { generatedRecipeTitle, resolveBean, resolveDripper } from "../../../lib/
 import { getProfile } from "../../../lib/profiles";
 
 export async function GET(request: Request) {
-  const user = await getChatGPTUser();
+  const user = await getAuthUser();
   const params = new URL(request.url).searchParams;
   const scope = params.get("scope") || "feed";
   const sort = params.get("sort") || "date";
@@ -24,7 +24,7 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
-  const user = await getChatGPTUser();
+  const user = await getAuthUser();
   if (!user) return Response.json({ error: "ログインが必要です" }, { status: 401 });
   const profile = await getProfile(user.userId);
   if (!profile) return Response.json({ error: "先にマイページを作成してください" }, { status: 409 });

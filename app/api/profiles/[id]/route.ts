@@ -1,11 +1,11 @@
 import { and, eq, sql } from "drizzle-orm";
-import { getChatGPTUser } from "../../../chatgpt-auth";
+import { getAuthUser } from "../../../auth";
 import { getDb } from "../../../../db";
 import { follows, profiles, recipes } from "../../../../db/schema";
 
 export async function GET(_: Request, context: { params: Promise<{ id: string }> }) {
   const { id } = await context.params;
-  const user = await getChatGPTUser();
+  const user = await getAuthUser();
   const db = getDb();
   const [profile] = await db.select({ userId: profiles.userId, displayName: profiles.displayName, bio: profiles.bio, createdAt: profiles.createdAt }).from(profiles).where(eq(profiles.userId, id)).limit(1);
   if (!profile) return Response.json({ error: "マイページが見つかりません" }, { status: 404 });

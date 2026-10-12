@@ -12,13 +12,11 @@ export function parseUsername(value: unknown) {
   return /^[A-Za-z0-9_.-]{3,24}$/.test(username) ? { username, usernameKey: username.toLowerCase() } : null;
 }
 
-export function passwordError(value: unknown, username = "") {
+export function passwordError(value: unknown) {
   if (typeof value !== "string") return "パスワードを入力してください";
   const length = Array.from(value).length;
-  if (length < 15 || length > 128) return "パスワードは15〜128文字にしてください";
+  if (length < 8 || length > 128) return "パスワードは8〜128文字にしてください";
   if (!value.trim()) return "空白だけのパスワードは使えません";
-  const lower = value.toLowerCase();
-  if (/^(.)\1{14,}$/.test(value) || /^(?:1234567890|abcdefghij|qwertyuiop)+/i.test(value) || /^(?:19|20)\d{6}(?:19|20)\d{6}$/.test(value) || lower.includes("password") || (username.length >= 4 && lower.includes(username.toLowerCase()))) return "推測しやすいパスワードです。別の言葉を選んでください";
   return null;
 }
 

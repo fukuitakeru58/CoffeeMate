@@ -1,5 +1,5 @@
 import { and, desc, eq } from "drizzle-orm";
-import { getChatGPTUser } from "../../../chatgpt-auth";
+import { getAuthUser } from "../../../auth";
 import { getDb } from "../../../../db";
 import { beans, recipes } from "../../../../db/schema";
 import { beanNameKey, parseMapUrl } from "../../../../lib/catalog";
@@ -8,7 +8,7 @@ type Context = { params: Promise<{ id: string }> };
 const value = (item: unknown, max: number) => typeof item === "string" ? item.trim().slice(0, max) : "";
 
 export async function GET(_: Request, context: Context) {
-  const user = await getChatGPTUser();
+  const user = await getAuthUser();
   if (!user) return Response.json({ error: "ログインが必要です" }, { status: 401 });
   const { id } = await context.params;
   const db = getDb();
@@ -19,7 +19,7 @@ export async function GET(_: Request, context: Context) {
 }
 
 export async function PATCH(request: Request, context: Context) {
-  const user = await getChatGPTUser();
+  const user = await getAuthUser();
   if (!user) return Response.json({ error: "ログインが必要です" }, { status: 401 });
   const { id } = await context.params;
   let payload: Record<string, unknown>;
@@ -50,7 +50,7 @@ export async function PATCH(request: Request, context: Context) {
 }
 
 export async function DELETE(_: Request, context: Context) {
-  const user = await getChatGPTUser();
+  const user = await getAuthUser();
   if (!user) return Response.json({ error: "ログインが必要です" }, { status: 401 });
   const { id } = await context.params;
   const db = getDb();

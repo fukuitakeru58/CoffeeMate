@@ -1,17 +1,17 @@
 import { asc, eq } from "drizzle-orm";
-import { getChatGPTUser } from "../../chatgpt-auth";
+import { getAuthUser } from "../../auth";
 import { getDb } from "../../../db";
 import { grinders } from "../../../db/schema";
 
 export async function GET() {
-  const user = await getChatGPTUser();
+  const user = await getAuthUser();
   if (!user) return Response.json({ error: "ログインが必要です" }, { status: 401 });
   const rows = await getDb().select().from(grinders).where(eq(grinders.userId, user.userId)).orderBy(asc(grinders.name));
   return Response.json({ grinders: rows });
 }
 
 export async function POST(request: Request) {
-  const user = await getChatGPTUser();
+  const user = await getAuthUser();
   if (!user) return Response.json({ error: "ログインが必要です" }, { status: 401 });
   let payload: { name?: unknown; maxClicks?: unknown };
   try { payload = await request.json() as { name?: unknown; maxClicks?: unknown }; }
