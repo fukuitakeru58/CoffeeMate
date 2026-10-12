@@ -12,4 +12,5 @@ export async function getSiteAdmin(): Promise<SiteAdmin | null> {
   return { userId, email };
 }
 
-export const ADMIN_SIGN_IN_PATH = "/signin-with-chatgpt?return_to=%2Fadmin";
+export const ADMIN_PAGE_PATH = "/owner-71737e54ee7aae718482bd29cb8d8aab";
+export const ADMIN_SIGN_IN_PATH = `/signin-with-chatgpt?return_to=${encodeURIComponent(ADMIN_PAGE_PATH)}`;
