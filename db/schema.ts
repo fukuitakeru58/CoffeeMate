@@ -97,6 +97,7 @@ export const likes = sqliteTable("likes", {
 export const bookmarks = sqliteTable("bookmarks", {
   recipeId: text("recipe_id").notNull().references(() => recipes.id, { onDelete: "cascade" }),
   userId: text("user_id").notNull(),
+  note: text("note").notNull().default(""),
 }, (table) => [primaryKey({ columns: [table.recipeId, table.userId] })]);
 
 export const ratings = sqliteTable("ratings", {

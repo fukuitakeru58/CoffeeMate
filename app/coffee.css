@@ -311,3 +311,27 @@ a.side-link { text-decoration: none; }
 .profile-drippers h2 { margin: 5px 0; font-size: 20px; }
 .profile-drippers p { margin: 0 0 16px; color: #8d9185; font-size: 12px; }
 @media (max-width: 600px) { .profile-drippers { margin: 28px 7px 0; padding: 18px; } }
+
+.saved-note-preview { display: flex; align-items: flex-start; gap: 6px; margin: 10px 0 0; padding: 9px 10px; border-radius: 7px; background: #edf2e9; color: #5a7050; font-size: 11px; line-height: 1.6; }
+.saved-note-preview svg { flex: none; margin-top: 2px; }
+.saved-note-preview span { overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; white-space: pre-wrap; }
+.private-save-note { margin: 17px 0; padding: 16px; border: 1px solid #dfe9d9; border-radius: 10px; background: #f4f8f1; }
+.private-save-note > div { display: flex; align-items: center; gap: 7px; color: #536e49; }
+.private-save-note strong { font-size: 13px; }
+.private-save-note span { margin-left: auto; font-size: 10px; }
+.private-save-note p { margin: 10px 0; color: #54634e; font-size: 12px; line-height: 1.7; white-space: pre-wrap; }
+.private-save-note button { border: 0; background: none; padding: 0; color: #4f7044; font-size: 11px; font-weight: 700; }
+.memo-backdrop { position: fixed; inset: 0; z-index: 150; display: grid; place-items: center; padding: 16px; background: rgba(27,31,24,.6); }
+.memo-dialog { width: min(440px,100%); padding: 23px; border-radius: 15px; background: #fffefa; box-shadow: 0 20px 60px #14191050; }
+.memo-head { display: flex; justify-content: space-between; align-items: flex-start; }
+.memo-head span { font-size: 10px; font-weight: 700; color: #94a386; }
+.memo-head h2 { margin: 3px 0 0; font-size: 21px; }
+.memo-head button { border: 0; background: transparent; color: #63705f; }
+.memo-recipe-title { margin: 16px 0 20px; color: #687060; font-size: 13px; }
+.memo-dialog label { display: block; margin-bottom: 8px; color: #4d5a47; font-size: 12px; font-weight: 700; }
+.memo-dialog textarea { width: 100%; resize: vertical; min-height: 120px; padding: 11px; border: 1px solid #dfe4d8; border-radius: 8px; outline: 0; background: #fff; color: var(--ink); font-size: 13px; line-height: 1.65; }
+.memo-dialog textarea:focus { border-color: #91ad83; box-shadow: 0 0 0 3px #e3efde; }
+.memo-dialog > small { display: block; margin-top: 5px; color: #8b9485; font-size: 10px; }
+.memo-actions { display: flex; justify-content: flex-end; align-items: center; gap: 14px; margin-top: 22px; }
+.memo-remove { margin-right: auto; padding: 8px 0; border: 0; background: none; color: #a16e61; font-size: 11px; }
+@media (max-width: 560px) { .memo-backdrop { align-items: end; padding: 0; }.memo-dialog { width: 100%; border-radius: 18px 18px 0 0; padding: 22px 19px max(23px,env(safe-area-inset-bottom)); } }
