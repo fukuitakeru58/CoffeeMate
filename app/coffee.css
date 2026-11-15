@@ -315,6 +315,33 @@ a.side-link { text-decoration: none; }
 .profile-drippers p { margin: 0 0 16px; color: #8d9185; font-size: 12px; }
 @media (max-width: 600px) { .profile-drippers { margin: 28px 7px 0; padding: 18px; } }
 
+/* Primary navigation stays visible above the recipe feed. */
+.site-header:has(.scope-nav) { height: auto; }
+.site-header:has(.scope-nav) .header-inner { height: 78px; }
+.site-menu { position: relative; flex: none; }
+.site-menu-trigger { width: 39px; height: 39px; display: grid; place-items: center; border: 1px solid #e2e6dc; border-radius: 9px; background: #fffefa; color: var(--olive-dark); }
+.site-menu-trigger:hover,.site-menu-trigger:focus-visible { background: #edf2e8; outline-color: #8faa7f; }
+.site-menu-panel { position: absolute; top: calc(100% + 10px); left: 0; width: 205px; padding: 8px; border: 1px solid #e2e6dc; border-radius: 12px; background: #fffefa; box-shadow: 0 12px 30px rgba(31,43,28,.16); display: grid; z-index: 60; }
+.site-menu-panel a { display: flex; align-items: center; gap: 10px; padding: 12px 11px; border-radius: 7px; color: #46583d; font-size: 13px; font-weight: 700; text-decoration: none; }
+.site-menu-panel a:hover,.site-menu-panel a:focus-visible { background: #eaf0e5; }
+.scope-nav { max-width: 1510px; margin: auto; padding: 0 44px; display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); border-top: 1px solid #edeae2; }
+.scope-nav button { min-width: 0; min-height: 48px; padding: 7px 5px; border: 0; border-bottom: 3px solid transparent; background: transparent; color: #78796e; font-size: 12px; font-weight: 700; white-space: nowrap; }
+.scope-nav button:hover,.scope-nav button.selected { color: var(--olive-dark); background: #f4f6ef; }
+.scope-nav button.selected { border-bottom-color: var(--olive); }
+.content-grid { grid-template-columns: minmax(0,1fr); }
+.about-back-link,.auth-page .header-inner > .outline-button { margin-left: auto; }
+.grinder-field { margin: 20px 0 12px; }
+.grinder-field > strong { display: block; color: #565a50; font-size: 11px; }
+.grinder-field > strong small,.legacy-grinder { margin-left: 5px; color: #989b90; font-size: 10px; font-weight: 400; }
+.grinder-add-form { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; padding: 12px 8px 4px; border-top: 1px solid #e5e8df; font-size: 11px; }
+.grinder-add-form strong { min-width: 100%; color: #526449; }
+.grinder-add-form label { display: flex; align-items: center; gap: 6px; color: #646d5e; }
+.grinder-add-form input { width: 70px; padding: 6px; border: 1px solid #dce2d5; border-radius: 6px; background: white; }
+.grinder-add-form button { padding: 8px 11px; border: 0; border-radius: 7px; background: var(--olive); color: white; font-size: 11px; font-weight: 700; }
+.grinder-add-form button:disabled { opacity: .5; }
+@media (max-width: 780px) { .site-header:has(.scope-nav) .header-inner { height: 65px; }.scope-nav { padding: 0 12px; }.scope-nav button { font-size: 11px; min-height: 46px; } }
+@media (max-width: 420px) { .scope-nav { padding: 0 3px; }.scope-nav button { font-size: 10px; letter-spacing: -.03em; }.about-back-link { display: none; } }
+
 .saved-note-preview { display: flex; align-items: flex-start; gap: 6px; margin: 10px 0 0; padding: 9px 10px; border-radius: 7px; background: #edf2e9; color: #5a7050; font-size: 11px; line-height: 1.6; }
 .saved-note-preview svg { flex: none; margin-top: 2px; }
 .saved-note-preview span { overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; white-space: pre-wrap; }
